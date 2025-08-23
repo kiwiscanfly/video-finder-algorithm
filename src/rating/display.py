@@ -16,5 +16,7 @@ def display_session_type_message(is_ml_ready: bool, rated_count: int) -> str:
     if is_ml_ready:
         return "📊 ML Recommendations based on your preferences:"
     else:
-        remaining_needed = 10 - rated_count
+        remaining_needed = max(0, 10 - rated_count)
+        if remaining_needed == 0:
+            return "🎓 Ready to train ML model!"
         return f"📹 Unrated videos (need {remaining_needed} more to train ML):"

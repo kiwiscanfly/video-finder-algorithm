@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Video Inspiration Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: #0f0f0f;
+            color: #ffffff;
+            overflow-x: hidden;
+        }
+
+        .header {
+            background-color: #212121;
+            padding: 12px 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid #333;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .logo-section {
+            display: flex;
+            align-items: center;
+            gap: 24px;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+            color: white;
+        }
+
+        .logo-icon {
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(45deg, #ff0000, #cc0000);
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 18px;
+        }
+
+        .logo-text {
+            font-size: 20px;
+            font-weight: 500;
+        }
+
+        .search-container {
+            flex-grow: 1;
+            max-width: 640px;
+            margin: 0 40px;
+            display: flex;
+        }
+
+        .search-box {
+            flex-grow: 1;
+            padding: 12px 16px;
+            border: 1px solid #333;
+            border-radius: 40px 0 0 40px;
+            background-color: #121212;
+            color: white;
+            font-size: 16px;
+            outline: none;
+        }
+
+        .search-box:focus {
+            border-color: #3ea6ff;
+        }
+
+        .search-button {
+            padding: 12px 20px;
+            border: 1px solid #333;
+            border-left: none;
+            border-radius: 0 40px 40px 0;
+            background-color: #222;
+            cursor: pointer;
+            color: white;
+        }
+
+        .status-bar {
+            background-color: #1a1a1a;
+            padding: 16px;
+            text-align: center;
+            border-bottom: 1px solid #333;
+        }
+
+        .status-trained {
+            color: #00d400;
+        }
+
+        .status-learning {
+            color: #ffaa00;
+        }
+
+        .main-content {
+            padding: 24px;
+        }
+
+        .section-title {
+            font-size: 20px;
+            font-weight: 500;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .ai-badge {
+            background: linear-gradient(45deg, #00d4aa, #007acc);
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .video-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 24px;
+            margin-top: 24px;
+        }
+
+        .video-card {
+            background-color: transparent;
+            border-radius: 12px;
+            overflow: hidden;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+        }
+
+        .video-card:hover {
+            transform: scale(1.02);
+        }
+
+        .video-thumbnail {
+            position: relative;
+            width: 100%;
+            height: 180px;
+            background-color: #333;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .video-thumbnail img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .confidence-badge {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .confidence-high {
+            color: #00d400;
+        }
+
+        .confidence-medium {
+            color: #ffaa00;
+        }
+
+        .confidence-low {
+            color: #ff6b6b;
+        }
+
+        .video-info {
+            padding: 12px 0;
+        }
+
+        .video-title {
+            font-size: 16px;
+            font-weight: 500;
+            line-height: 1.3;
+            margin-bottom: 4px;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .video-meta {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #aaa;
+            font-size: 14px;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 60px;
+            color: #aaa;
+        }
+
+        .loading-spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid #333;
+            border-top: 4px solid #ff0000;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 16px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .error {
+            background-color: #ff4444;
+            color: white;
+            padding: 16px;
+            border-radius: 8px;
+            margin: 20px;
+            text-align: center;
+        }
+
+        @media (max-width: 768px) {
+            .search-container {
+                margin: 0 16px;
+                max-width: none;
+            }
+            
+            .video-grid {
+                grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+                gap: 16px;
+            }
+            
+            .main-content {
+                padding: 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="logo-section">
+            <a href="/" class="logo">
+                <div class="logo-icon">VI</div>
+                <span class="logo-text">Video Inspiration</span>
+            </a>
+        </div>
+        
+        <div class="search-container">
+            <input type="text" class="search-box" placeholder="Search coding videos..." disabled>
+            <button class="search-button">🔍</button>
+        </div>
+        
+        <div style="width: 200px;"></div>
+    </header>
+
+    <div class="status-bar" id="statusBar">
+        <div class="loading">
+            <div class="loading-spinner"></div>
+            Loading your personalized recommendations...
+        </div>
+    </div>
+
+    <main class="main-content">
+        <h1 class="section-title" id="sectionTitle" style="display: none;">
+            Recommended for you
+            <span class="ai-badge">AI POWERED</span>
+        </h1>
+        
+        <div class="video-grid" id="videoGrid">
+            <!-- Videos will be loaded here -->
+        </div>
+    </main>
+
+    <script>
+        async function loadRecommendations() {
+            try {
+                const response = await fetch('/api/recommendations');
+                const data = await response.json();
+                
+                if (!data.success) {
+                    throw new Error(data.error || 'Failed to load recommendations');
+                }
+                
+                updateStatusBar(data.model_trained, data.total_ratings);
+                displayVideos(data.videos);
+                
+            } catch (error) {
+                console.error('Error loading recommendations:', error);
+                document.getElementById('videoGrid').innerHTML = 
+                    `<div class="error">Failed to load recommendations: ${error.message}</div>`;
+            }
+        }
+
+        function updateStatusBar(modelTrained, totalRatings) {
+            const statusBar = document.getElementById('statusBar');
+            const sectionTitle = document.getElementById('sectionTitle');
+            
+            if (modelTrained) {
+                statusBar.innerHTML = `
+                    <div class="status-trained">
+                        🤖 AI Model Active • Trained on ${totalRatings} video ratings • Showing personalized recommendations
+                    </div>
+                `;
+                sectionTitle.innerHTML = 'AI Recommendations for You <span class="ai-badge">PERSONALIZED</span>';
+            } else {
+                statusBar.innerHTML = `
+                    <div class="status-learning">
+                        📚 Learning Mode • Need ${10 - totalRatings} more ratings to activate AI recommendations
+                    </div>
+                `;
+                sectionTitle.innerHTML = 'Popular Coding Videos <span class="ai-badge">TRENDING</span>';
+            }
+            
+            sectionTitle.style.display = 'flex';
+        }
+
+        function displayVideos(videos) {
+            const videoGrid = document.getElementById('videoGrid');
+            
+            if (videos.length === 0) {
+                videoGrid.innerHTML = '<div class="loading">No videos available. Please run the main application to search for videos.</div>';
+                return;
+            }
+            
+            videoGrid.innerHTML = videos.map(video => `
+                <div class="video-card" onclick="openVideo('${video.url}')">
+                    <div class="video-thumbnail">
+                        <img src="${video.thumbnail}" alt="${video.title}" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%22320%22 height=%22180%22><rect width=%22100%%22 height=%22100%%22 fill=%22%23333%22/><text x=%2250%%22 y=%2250%%22 text-anchor=%22middle%22 dy=%22.3em%22 fill=%22%23999%22>No Image</text></svg>'">
+                        <div class="confidence-badge ${getConfidenceClass(video.confidence)}">
+                            ${video.confidence}% match
+                        </div>
+                    </div>
+                    <div class="video-info">
+                        <div class="video-title">${video.title}</div>
+                        <div class="video-meta">
+                            <span>${video.channel_name}</span>
+                            <span>•</span>
+                            <span>${video.views_formatted}</span>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function getConfidenceClass(confidence) {
+            if (confidence >= 70) return 'confidence-high';
+            if (confidence >= 50) return 'confidence-medium';
+            return 'confidence-low';
+        }
+
+        function openVideo(url) {
+            window.open(url, '_blank');
+        }
+
+        // Load recommendations when page loads
+        document.addEventListener('DOMContentLoaded', loadRecommendations);
+        
+        // Refresh every 5 minutes
+        setInterval(loadRecommendations, 300000);
+    </script>
+</body>
+</html>
