@@ -209,6 +209,56 @@
             font-size: 14px;
         }
 
+        .rating-buttons {
+            display: flex;
+            gap: 8px;
+            margin-top: 8px;
+            justify-content: center;
+        }
+
+        .rating-btn {
+            padding: 6px 12px;
+            border: 1px solid #333;
+            border-radius: 20px;
+            background-color: #222;
+            color: white;
+            cursor: pointer;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            transition: all 0.2s ease;
+        }
+
+        .rating-btn:hover {
+            transform: scale(1.05);
+        }
+
+        .rating-btn.like-btn:hover {
+            background-color: #00d400;
+            border-color: #00d400;
+        }
+
+        .rating-btn.dislike-btn:hover {
+            background-color: #ff4444;
+            border-color: #ff4444;
+        }
+
+        .rating-btn.liked {
+            background-color: #00d400;
+            border-color: #00d400;
+        }
+
+        .rating-btn.disliked {
+            background-color: #ff4444;
+            border-color: #ff4444;
+        }
+
+        .rating-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
         .loading {
             text-align: center;
             padding: 60px;
@@ -343,19 +393,27 @@
             }
             
             videoGrid.innerHTML = videos.map(video => `
-                <div class="video-card" onclick="openVideo('${video.url}')">
-                    <div class="video-thumbnail">
+                <div class="video-card">
+                    <div class="video-thumbnail" onclick="openVideo('${video.url}')">
                         <img src="${video.thumbnail}" alt="${video.title}" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%22320%22 height=%22180%22><rect width=%22100%%22 height=%22100%%22 fill=%22%23333%22/><text x=%2250%%22 y=%2250%%22 text-anchor=%22middle%22 dy=%22.3em%22 fill=%22%23999%22>No Image</text></svg>'">
                         <div class="confidence-badge ${getConfidenceClass(video.confidence)}">
                             ${video.confidence}% match
                         </div>
                     </div>
                     <div class="video-info">
-                        <div class="video-title">${video.title}</div>
+                        <div class="video-title" onclick="openVideo('${video.url}')" style="cursor: pointer;">${video.title}</div>
                         <div class="video-meta">
                             <span>${video.channel_name}</span>
                             <span>•</span>
                             <span>${video.views_formatted}</span>
+                        </div>
+                        <div class="rating-buttons">
+                            <button class="rating-btn like-btn" onclick="rateVideo('${video.id}', true)" id="like-${video.id}">
+                                👍 Like
+                            </button>
+                            <button class="rating-btn dislike-btn" onclick="rateVideo('${video.id}', false)" id="dislike-${video.id}">
+                                👎 Dislike
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -370,6 +428,98 @@
 
         function openVideo(url) {
             window.open(url, '_blank');
+        }
+
+        async function rateVideo(videoId, liked) {
+            const likeBtn = document.getElementById(`like-${videoId}`);
+            const dislikeBtn = document.getElementById(`dislike-${videoId}`);
+            
+            // Disable buttons during request
+            likeBtn.disabled = true;
+            dislikeBtn.disabled = true;
+            
+            try {
+                const response = await fetch('/api/rate', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        video_id: videoId,
+                        liked: liked
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    // Update button states
+                    likeBtn.classList.remove('liked');
+                    dislikeBtn.classList.remove('disliked');
+                    
+                    if (liked) {
+                        likeBtn.classList.add('liked');
+                        likeBtn.textContent = '👍 Liked';
+                    } else {
+                        dislikeBtn.classList.add('disliked');
+                        dislikeBtn.textContent = '👎 Disliked';
+                    }
+                    
+                    // Show feedback
+                    showNotification(liked ? 'Video liked! 👍' : 'Video disliked! 👎');
+                    
+                    // Refresh recommendations after rating if model was retrained
+                    if (result.model_retrained) {
+                        setTimeout(() => {
+                            showNotification('🤖 AI model updated with your feedback!');
+                            loadRecommendations();
+                        }, 1500);
+                    }
+                } else {
+                    throw new Error(result.error || 'Failed to rate video');
+                }
+            } catch (error) {
+                console.error('Error rating video:', error);
+                showNotification('Failed to rate video: ' + error.message);
+            }
+            
+            // Re-enable buttons
+            likeBtn.disabled = false;
+            dislikeBtn.disabled = false;
+        }
+
+        function showNotification(message) {
+            // Create notification element
+            const notification = document.createElement('div');
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background-color: #333;
+                color: white;
+                padding: 12px 16px;
+                border-radius: 8px;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+                z-index: 1000;
+                transition: all 0.3s ease;
+                transform: translateX(100%);
+            `;
+            notification.textContent = message;
+            
+            document.body.appendChild(notification);
+            
+            // Animate in
+            setTimeout(() => {
+                notification.style.transform = 'translateX(0)';
+            }, 100);
+            
+            // Remove after 3 seconds
+            setTimeout(() => {
+                notification.style.transform = 'translateX(100%)';
+                setTimeout(() => {
+                    document.body.removeChild(notification);
+                }, 300);
+            }, 3000);
         }
 
         // Load recommendations when page loads
