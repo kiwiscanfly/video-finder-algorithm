@@ -30,14 +30,26 @@ def search_youtube_videos_by_query(api_key: str, query: str, max_results: int) -
 
 def get_coding_search_queries() -> List[str]:
     return [
-        "coding tutorial millions views",
-        "programming challenge viral", 
-        "I built app hours",
-        "learn programming beginner",
-        "coding project from scratch",
-        "AI coding tutorial",
-        "web development crash course",
-        "javascript tutorial millions",
-        "python tutorial viral",
-        "coding in 24 hours"
+# AI focus (shorter terms)
+        "AI coding tools 2024",
+        "ChatGPT API project",
+        "machine learning build",
+        "AI developer workflow",
+
+        # Project-based (concise)
+        "react project build",
+        "python automation script",
+        "full stack app build",
+        "javascript project code",
+
+        # Implementation focus (brief)
+        "coding patterns advanced",
+        "developer setup optimization",
+        "API design examples",
+        "database optimization tips",
+
+        # Recent/specialized (short)
+        "modern dev practices",
+        "new coding tools 2024",
+        "framework comparison"
     ]

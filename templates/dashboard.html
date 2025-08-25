@@ -259,6 +259,39 @@
             cursor: not-allowed;
         }
 
+        .nav-buttons {
+            display: flex;
+            gap: 8px;
+        }
+
+        .nav-btn {
+            padding: 8px 16px;
+            border: 1px solid #333;
+            border-radius: 20px;
+            background-color: #222;
+            color: white;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s ease;
+        }
+
+        .nav-btn:hover {
+            background-color: #333;
+        }
+
+        .nav-btn.active {
+            background-color: #ff0000;
+            border-color: #ff0000;
+        }
+
+        .view-container {
+            display: none;
+        }
+
+        .view-container.active {
+            display: block;
+        }
+
         .loading {
             text-align: center;
             padding: 60px;
@@ -320,7 +353,14 @@
             <button class="search-button">🔍</button>
         </div>
         
-        <div style="width: 200px;"></div>
+        <div class="nav-buttons">
+            <button class="nav-btn active" id="ratingBtn" onclick="switchView('rating')">
+                📝 Rate Videos
+            </button>
+            <button class="nav-btn" id="likedBtn" onclick="switchView('liked')">
+                🎯 MyTube
+            </button>
+        </div>
     </header>
 
     <div class="status-bar" id="statusBar">
@@ -331,13 +371,28 @@
     </div>
 
     <main class="main-content">
-        <h1 class="section-title" id="sectionTitle" style="display: none;">
-            Recommended for you
-            <span class="ai-badge">AI POWERED</span>
-        </h1>
-        
-        <div class="video-grid" id="videoGrid">
-            <!-- Videos will be loaded here -->
+        <!-- Rating View -->
+        <div class="view-container active" id="ratingView">
+            <h1 class="section-title" id="sectionTitle" style="display: none;">
+                Recommended for you
+                <span class="ai-badge">AI POWERED</span>
+            </h1>
+            
+            <div class="video-grid" id="videoGrid">
+                <!-- Videos will be loaded here -->
+            </div>
+        </div>
+
+        <!-- Liked Videos View -->
+        <div class="view-container" id="likedView">
+            <h1 class="section-title" id="likedSectionTitle" style="display: none;">
+                MyTube - Videos I Know You'll Love
+                <span class="ai-badge">AI CURATED</span>
+            </h1>
+            
+            <div class="video-grid" id="likedVideoGrid">
+                <!-- Liked videos will be loaded here -->
+            </div>
         </div>
     </main>
 
@@ -522,11 +577,99 @@
             }, 3000);
         }
 
+        async function loadLikedVideos() {
+            try {
+                const response = await fetch('/api/liked');
+                const data = await response.json();
+                
+                if (!data.success) {
+                    throw new Error(data.error || 'Failed to load liked videos');
+                }
+                
+                displayLikedVideos(data.videos);
+                updateLikedStatusBar(data.total_liked);
+                
+            } catch (error) {
+                console.error('Error loading liked videos:', error);
+                document.getElementById('likedVideoGrid').innerHTML = 
+                    `<div class="error">Failed to load liked videos: ${error.message}</div>`;
+            }
+        }
+
+        function displayLikedVideos(videos) {
+            const likedVideoGrid = document.getElementById('likedVideoGrid');
+            const likedSectionTitle = document.getElementById('likedSectionTitle');
+            
+            if (videos.length === 0) {
+                likedVideoGrid.innerHTML = '<div class="loading">No videos curated yet. Rate some videos and I\'ll learn what you love!</div>';
+                likedSectionTitle.style.display = 'none';
+                return;
+            }
+            
+            likedSectionTitle.style.display = 'flex';
+            
+            likedVideoGrid.innerHTML = videos.map(video => `
+                <div class="video-card">
+                    <div class="video-thumbnail" onclick="openVideo('${video.url}')">
+                        <img src="${video.thumbnail}" alt="${video.title}" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%22320%22 height=%22180%22><rect width=%22100%%22 height=%22100%%22 fill=%22%23333%22/><text x=%2250%%22 y=%2250%%22 text-anchor=%22middle%22 dy=%22.3em%22 fill=%22%23999%22>No Image</text></svg>'">
+                        <div class="confidence-badge confidence-high">
+                            ${video.confidence}% match
+                        </div>
+                    </div>
+                    <div class="video-info">
+                        <div class="video-title" onclick="openVideo('${video.url}')" style="cursor: pointer;">${video.title}</div>
+                        <div class="video-meta">
+                            <span>${video.channel_name}</span>
+                            <span>•</span>
+                            <span>${video.views_formatted}</span>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function updateLikedStatusBar(totalLiked) {
+            // Update status bar when viewing MyTube videos
+            const statusBar = document.getElementById('statusBar');
+            statusBar.innerHTML = `
+                <div class="status-trained">
+                    🎯 MyTube AI Curation • ${totalLiked} videos I know you'll love • Ranked by confidence
+                </div>
+            `;
+        }
+
+        let currentView = 'rating';
+
+        function switchView(view) {
+            currentView = view;
+            
+            // Update navigation buttons
+            document.getElementById('ratingBtn').classList.toggle('active', view === 'rating');
+            document.getElementById('likedBtn').classList.toggle('active', view === 'liked');
+            
+            // Update view containers
+            document.getElementById('ratingView').classList.toggle('active', view === 'rating');
+            document.getElementById('likedView').classList.toggle('active', view === 'liked');
+            
+            // Load appropriate data
+            if (view === 'rating') {
+                loadRecommendations();
+            } else if (view === 'liked') {
+                loadLikedVideos();
+            }
+        }
+
         // Load recommendations when page loads
         document.addEventListener('DOMContentLoaded', loadRecommendations);
         
-        // Refresh every 5 minutes
-        setInterval(loadRecommendations, 300000);
+        // Refresh current view every 5 minutes
+        setInterval(() => {
+            if (currentView === 'rating') {
+                loadRecommendations();
+            } else if (currentView === 'liked') {
+                loadLikedVideos();
+            }
+        }, 300000);
     </script>
 </body>
 </html>
