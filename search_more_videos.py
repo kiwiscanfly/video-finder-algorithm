@@ -24,15 +24,13 @@ def search_more_videos():
 
     # Use different/additional search queries to find new videos
     additional_queries = [
-        "python projects for beginners viral",
-        "full stack web development course",
-        "machine learning crash course",
-        "javascript frameworks comparison",
-        "coding interview preparation",
-        "docker tutorial for developers",
-        "git and github tutorial",
-        "database design tutorial",
-        "API development tutorial"
+        # Add your additional search queries here
+        # Examples:
+        # "python tutorial",
+        # "web development course",
+        # "coding interview prep",
+        # "javascript frameworks",
+        # "database tutorial"
     ]
 
     all_videos = []

@@ -1,4 +1,9 @@
+# Environment variables and sensitive files
 .env
+.env.local
+.env.*.local
+
+# Virtual environment
 venv/
 __pycache__/
 *.pyc
