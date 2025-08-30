@@ -68,3 +68,46 @@ def remove_video_preference(video_id: str, db_path: str) -> bool:
         # Remove the preference
         cursor.execute("DELETE FROM preferences WHERE video_id = ?", (video_id,))
         return cursor.rowcount > 0
+
+
+def get_liked_video_tags(db_path: str) -> list[str]:
+    """
+    Extract all tags from liked videos in the database.
+    
+    Args:
+        db_path: Database path
+        
+    Returns:
+        Flattened, deduplicated list of tags from liked videos
+    """
+    import json
+    
+    with get_database_connection(db_path) as conn:
+        cursor = conn.cursor()
+        
+        # Get tags from all liked videos
+        cursor.execute('''
+            SELECT v.tags
+            FROM videos v
+            JOIN preferences p ON v.id = p.video_id
+            WHERE p.liked = 1 AND v.tags IS NOT NULL AND v.tags != ""
+        ''')
+        
+        all_tags = []
+        for row in cursor.fetchall():
+            tags_json = row[0]
+            if tags_json:
+                try:
+                    tags = json.loads(tags_json)
+                    if isinstance(tags, list):
+                        # Clean and normalize tags
+                        for tag in tags:
+                            if isinstance(tag, str) and tag.strip():
+                                clean_tag = tag.strip().lower()
+                                if clean_tag not in all_tags:
+                                    all_tags.append(clean_tag)
+                except (json.JSONDecodeError, TypeError):
+                    # Skip malformed JSON
+                    continue
+        
+        return all_tags

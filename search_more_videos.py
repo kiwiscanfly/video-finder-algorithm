@@ -17,8 +17,8 @@ def search_more_videos():
 
     print("🔍 Searching for more coding videos...")
 
-    # Use QueryService to get AI-generated additional queries
-    query_service = QueryService()
+    # Use QueryService to get AI-generated additional queries with database path for personalization
+    query_service = QueryService(AppConfig.DATABASE_PATH)
     additional_queries = query_service.get_additional_queries(
         use_ai=True, 
         num_queries=10

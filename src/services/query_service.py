@@ -15,9 +15,14 @@ class QueryService:
     Provides AI-generated queries with fallback to static queries.
     """
     
-    def __init__(self):
-        """Initialize the QueryService."""
-        pass
+    def __init__(self, db_path: str = None):
+        """
+        Initialize the QueryService.
+        
+        Args:
+            db_path: Path to the database for personalized keywords
+        """
+        self.db_path = db_path
     
     def get_default_queries(self, use_ai: bool = True, num_queries: int = 15) -> List[str]:
         """
@@ -31,7 +36,7 @@ class QueryService:
             List of search queries
         """
         if use_ai:
-            ai_queries = generate_default_coding_queries(num_queries)
+            ai_queries = generate_default_coding_queries(num_queries, self.db_path)
             if ai_queries:
                 return ai_queries
             else:
@@ -52,7 +57,7 @@ class QueryService:
             List of search queries
         """
         if use_ai:
-            ai_queries = generate_default_coding_queries(num_queries)
+            ai_queries = generate_default_coding_queries(num_queries, self.db_path)
             if ai_queries:
                 return ai_queries
         

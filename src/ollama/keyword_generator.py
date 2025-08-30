@@ -172,12 +172,13 @@ def fallback_manual_keywords(topic: str) -> List[str]:
     return patterns
 
 
-def generate_default_coding_queries(num_queries: int = None) -> Optional[List[str]]:
+def generate_default_coding_queries(num_queries: int = None, db_path: str = None) -> Optional[List[str]]:
     """
-    Generate default coding search queries using dynamic prompts with random keywords.
+    Generate default coding search queries using dynamic prompts with personalized keywords.
     
     Args:
         num_queries: Number of search queries to generate (uses default if None)
+        db_path: Database path for personalized keywords (required for personalization)
         
     Returns:
         List of search queries or None if error
@@ -201,11 +202,21 @@ def generate_default_coding_queries(num_queries: int = None) -> Optional[List[st
             print(f"No models found. Please pull a model with: ollama pull {OllamaConfig.DEFAULT_MODEL}")
         return None
     
-    # Randomly select 8-10 keywords from the programming keywords
-    selected_keywords = random.sample(
-        YouTubeConfig.PROGRAMMING_KEYWORDS, 
-        min(random.randint(8, 10), len(YouTubeConfig.PROGRAMMING_KEYWORDS))
-    )
+    # Get personalized keywords based on liked videos or fallback to static keywords
+    if db_path:
+        from src.services.tag_service import TagService
+        tag_service = TagService(db_path)
+        selected_keywords = tag_service.get_personalized_keywords(random.randint(8, 10))
+        keyword_source = tag_service.get_keyword_source()
+        print(f"🎯 Using {keyword_source}")
+    else:
+        # Fallback to static programming keywords if no db_path provided
+        selected_keywords = random.sample(
+            YouTubeConfig.PROGRAMMING_KEYWORDS, 
+            min(random.randint(8, 10), len(YouTubeConfig.PROGRAMMING_KEYWORDS))
+        )
+        print("🔧 Using fallback static programming keywords")
+    
     keywords_str = ", ".join(selected_keywords)
     
     prompt = f"""Generate {num_queries} YouTube search queries for finding programming/coding videos focused on practical projects and development.

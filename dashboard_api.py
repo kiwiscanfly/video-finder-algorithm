@@ -38,10 +38,10 @@ class DashboardAPI:
     def get_recommendations(self):
         if self.model_trained and self.model:
             video_features = get_unrated_videos_with_features_from_database(self.db_path)
-            recommendations = predict_video_preferences_with_model(self.model, video_features)
-            return recommendations[:12]  # Return 12 videos for dashboard
+            recommendations = predict_video_preferences_with_model(self.model, video_features, top_n=24)
+            return recommendations  # Return 24 videos for dashboard
         else:
-            fallback_videos = get_unrated_videos_from_database(12, self.db_path)
+            fallback_videos = get_unrated_videos_from_database(24, self.db_path)
             for video in fallback_videos:
                 video['like_probability'] = 0.5  # Default probability
             return fallback_videos

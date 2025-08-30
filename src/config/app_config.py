@@ -98,3 +98,23 @@ class UIConfig:
     RATING_PROMPT = "Rate this video (y/n/q): "
     LIKE_NOTES_PROMPT = "Why did you like it? (optional): "
     DISLIKE_NOTES_PROMPT = "Why didn't you like it? (optional): "
+
+
+# Default search queries for coding videos
+DEFAULT_CODING_QUERIES = [
+    "coding passion project ideas",
+    "weekend programming projects", 
+    "creative coding projects",
+    "fun programming side projects",
+    "indie developer projects",
+    "building passion projects programming",
+    "personal coding project showcase", 
+    "hobby programming projects",
+    "weekend coding challenge",
+    "solo developer projects",
+    "build something cool programming",
+    "coding project inspiration",
+    "unique programming projects",
+    "developer side project success",
+    "open source passion projects"
+]
