@@ -5,9 +5,10 @@ Ollama integration for generating YouTube search keywords from topics.
 import os
 import json
 import requests
+import random
 from typing import List, Optional
 
-from src.config.app_config import OllamaConfig
+from src.config.app_config import OllamaConfig, YouTubeConfig
 
 
 def check_ollama_running() -> bool:
@@ -84,7 +85,6 @@ Create diverse queries including:
 - Simple topic names (e.g., just "{topic}")
 - Basic combinations (e.g., "{topic} tutorial")
 - Broader terms without too many keywords
-- Mix of beginner and advanced levels
 - Some project-based queries
 - Avoid overly specific or long queries
 
@@ -170,6 +170,108 @@ def fallback_manual_keywords(topic: str) -> List[str]:
     ]
     
     return patterns
+
+
+def generate_default_coding_queries(num_queries: int = None) -> Optional[List[str]]:
+    """
+    Generate default coding search queries using dynamic prompts with random keywords.
+    
+    Args:
+        num_queries: Number of search queries to generate (uses default if None)
+        
+    Returns:
+        List of search queries or None if error
+    """
+    if num_queries is None:
+        num_queries = OllamaConfig.DEFAULT_NUM_QUERIES
+        
+    if not check_ollama_running():
+        print("Error: Ollama service is not running.")
+        print("Please start Ollama with: ollama serve")
+        return None
+    
+    model = get_model_from_env()
+    
+    if not check_model_exists(model):
+        print(f"Error: Model '{model}' not found.")
+        available = list_available_models()
+        if available:
+            print(f"Available models: {', '.join(available)}")
+        else:
+            print(f"No models found. Please pull a model with: ollama pull {OllamaConfig.DEFAULT_MODEL}")
+        return None
+    
+    # Randomly select 8-10 keywords from the programming keywords
+    selected_keywords = random.sample(
+        YouTubeConfig.PROGRAMMING_KEYWORDS, 
+        min(random.randint(8, 10), len(YouTubeConfig.PROGRAMMING_KEYWORDS))
+    )
+    keywords_str = ", ".join(selected_keywords)
+    
+    prompt = f"""Generate {num_queries} YouTube search queries for finding programming/coding videos focused on practical projects and development.
+
+Focus on these technology areas and concepts: {keywords_str}
+
+Create diverse queries that emphasize:
+- Building real projects and applications
+- Practical development tutorials
+- Project-focused learning
+- Technology implementation
+- Development workflows and best practices
+
+Make queries natural and broad enough to find popular project-oriented videos.
+Keep queries concise - most should be 2-4 words.
+Focus on "building", "creating", "developing" rather than basic tutorials.
+
+Examples of good queries: "build web app", "react project tutorial", "python automation project"
+
+Return only the search queries, one per line. Do not include numbering or bullet points."""
+    
+    try:
+        response = requests.post(
+            OllamaConfig.GENERATE_ENDPOINT,
+            json={
+                "model": model,
+                "prompt": prompt,
+                "stream": False
+            },
+            timeout=OllamaConfig.REQUEST_TIMEOUT
+        )
+        
+        if response.status_code == 200:
+            result = response.json()
+            response_text = result.get('response', '')
+            
+            # Parse the response into individual queries
+            queries = [
+                line.strip() 
+                for line in response_text.split('\n') 
+                if line.strip() and not line.strip().startswith(('-', '*', '•'))
+            ]
+            
+            # Remove any numbering (e.g., "1.", "2.") at the start of queries
+            cleaned_queries = []
+            for query in queries:
+                # Remove leading numbers and dots
+                if query and query[0].isdigit():
+                    query = query.lstrip('0123456789.)').strip()
+                if query:
+                    cleaned_queries.append(query)
+            
+            return cleaned_queries[:num_queries]
+        else:
+            print(f"Error: Ollama API returned status {response.status_code}")
+            return None
+            
+    except requests.Timeout:
+        print("Error: Ollama request timed out. The model may be loading or slow.")
+        return None
+    except requests.ConnectionError:
+        print("Error: Could not connect to Ollama service.")
+        return None
+    except Exception as e:
+        print(f"Error generating queries: {str(e)}")
+        return None
 
 
 if __name__ == "__main__":

@@ -16,8 +16,8 @@ class AppConfig:
     ML_TRAINING_THRESHOLD = 10  # Minimum ratings needed to train model
     
     # Search defaults
-    DEFAULT_RESULTS_PER_QUERY = 10
-    TOPIC_SEARCH_RESULTS_PER_QUERY = 3
+    DEFAULT_RESULTS_PER_QUERY = 15
+    TOPIC_SEARCH_RESULTS_PER_QUERY = 5
     TOPIC_SEARCH_MAX_QUERIES = 8
     
     # File paths
@@ -39,14 +39,26 @@ class YouTubeConfig:
     # Content filtering
     MIN_VIEW_COUNT_THRESHOLD = 100000
     
-    # Programming-related keywords for content filtering
+    # Project-focused programming keywords for content filtering
     PROGRAMMING_KEYWORDS = [
-        'coding', 'programming', 'javascript', 'python', 'react', 
-        'web development', 'tutorial', 'learn', 'build', 'create', 
-        'app', 'website', 'algorithm', 'ai', 'machine learning',
-        'data science', 'software', 'development', 'code', 'tech',
-        'computer science', 'backend', 'frontend', 'fullstack',
-        'database', 'api', 'framework', 'library', 'devops'
+        # Project building & development
+        'build', 'building', 'project', 'app', 'application', 'website', 'platform',
+        'create', 'creating', 'develop', 'developing', 'implementation', 'deploy',
+        
+        # Technology & frameworks
+        'javascript', 'python', 'react', 'node.js', 'typescript', 'flutter',
+        'docker', 'kubernetes', 'aws', 'api', 'microservices', 'database', 'sqlite',
+        
+        # Project types & domains  
+        'web development', 'mobile app', 'machine learning', 'ai', 'data science',
+        'devops', 'backend', 'frontend', 'fullstack', 'blockchain', 'game dev',
+        
+        # Project-specific terms
+        'architecture', 'system design', 'scalable', 'performance', 'optimization',
+        'startup', 'saas', 'mvp', 'prototype', 'production', 'enterprise',
+        
+        # Development workflow
+        'git', 'github', 'ci/cd', 'testing', 'debugging', 'refactoring', 'code review'
     ]
 
 
@@ -86,23 +98,3 @@ class UIConfig:
     RATING_PROMPT = "Rate this video (y/n/q): "
     LIKE_NOTES_PROMPT = "Why did you like it? (optional): "
     DISLIKE_NOTES_PROMPT = "Why didn't you like it? (optional): "
-
-
-# Default search queries for coding videos
-DEFAULT_CODING_QUERIES = [
-    "coding passion project ideas",
-    "weekend programming projects", 
-    "creative coding projects",
-    "fun programming side projects",
-    "indie developer projects",
-    "building passion projects programming",
-    "personal coding project showcase", 
-    "hobby programming projects",
-    "weekend coding challenge",
-    "solo developer projects",
-    "build something cool programming",
-    "coding project inspiration",
-    "unique programming projects",
-    "developer side project success",
-    "open source passion projects"
-]

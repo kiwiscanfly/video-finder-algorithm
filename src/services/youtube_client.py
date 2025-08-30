@@ -88,9 +88,8 @@ class YouTubeAPIClient:
         videos = []
         for i, item in enumerate(items):
             try:
-                video = self._parse_video_response(item)
-                if self._is_relevant_coding_video(video):
-                    videos.append(video)
+                video = self._parse_video_response(item) 
+                videos.append(video)
             except Exception as e:
                 print(f"       ✗ Error parsing video {i+1}: {type(e).__name__}: {e}")
                 continue
@@ -215,23 +214,3 @@ class YouTubeAPIClient:
             'category_id': int(snippet.get('categoryId', 0)),
             'url': f"https://www.youtube.com/watch?v={item['id']}"
         }
-    
-    def _is_relevant_coding_video(self, video: dict) -> bool:
-        """
-        Check if a video is relevant to coding/programming.
-        
-        Args:
-            video: Video dictionary
-            
-        Returns:
-            True if video is relevant, False otherwise
-        """
-        title_lower = video['title'].lower()
-        description_lower = video['description'].lower()
-        
-        # Check if any programming keywords are in title or description
-        for keyword in YouTubeConfig.PROGRAMMING_KEYWORDS:
-            if keyword in title_lower or keyword in description_lower:
-                return True
-        
-        return False

@@ -11,13 +11,15 @@ def save_videos_to_database(videos: List[Dict], db_path: str):
 
         for video in videos:
             cursor.execute('''
-                INSERT OR REPLACE INTO videos VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                INSERT OR REPLACE INTO videos VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             ''', (
                 video['id'], video['title'], video['description'],
                 video['view_count'], video['like_count'], video['comment_count'],
                 video['duration'], video['published_at'], video['channel_name'],
                 video['thumbnail_url'], video['tags'], video['category_id'],
-                datetime.now().isoformat()
+                datetime.now().isoformat(),
+                video.get('search_session_id', None),
+                video.get('search_topic', None)
             ))
 
 def save_video_features_to_database(video_id: str, features: Tuple, db_path: str):

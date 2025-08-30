@@ -44,3 +44,27 @@ def get_rated_count_from_database(db_path: str) -> int:
         cursor.execute("SELECT COUNT(*) FROM preferences")
         count = cursor.fetchone()[0]
         return count
+
+
+def remove_video_preference(video_id: str, db_path: str) -> bool:
+    """
+    Remove a video preference (rating) from the database.
+    
+    Args:
+        video_id: The video ID to remove preference for
+        db_path: Database path
+        
+    Returns:
+        True if preference was removed, False if not found
+    """
+    with get_database_connection(db_path) as conn:
+        cursor = conn.cursor()
+        
+        # Check if preference exists
+        cursor.execute("SELECT video_id FROM preferences WHERE video_id = ?", (video_id,))
+        if not cursor.fetchone():
+            return False
+        
+        # Remove the preference
+        cursor.execute("DELETE FROM preferences WHERE video_id = ?", (video_id,))
+        return cursor.rowcount > 0

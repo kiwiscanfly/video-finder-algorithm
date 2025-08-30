@@ -4,6 +4,7 @@ from dotenv import load_dotenv
 
 from src.config.app_config import AppConfig
 from src.services.video_search_service import VideoSearchService
+from src.services.query_service import QueryService
 
 load_dotenv()
 
@@ -16,19 +17,17 @@ def search_more_videos():
 
     print("🔍 Searching for more coding videos...")
 
-    # Use different/additional search queries to find new videos
-    additional_queries = [
-        "python tutorial",
-        "web development course",
-        "coding interview prep",
-        "javascript frameworks",
-        "database tutorial",
-        "react tutorial",
-        "node.js tutorial",
-        "data structures algorithms",
-        "system design",
-        "software engineering"
-    ]
+    # Use QueryService to get AI-generated additional queries
+    query_service = QueryService()
+    additional_queries = query_service.get_additional_queries(
+        use_ai=True, 
+        num_queries=10
+    )
+    
+    if additional_queries:
+        print(f"🤖 Generated {len(additional_queries)} search queries using AI")
+    else:
+        print("⚠️ Using fallback queries")
 
     # Use VideoSearchService for clean, unified search
     search_service = VideoSearchService(api_key, AppConfig.DATABASE_PATH)
