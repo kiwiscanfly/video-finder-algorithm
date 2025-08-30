@@ -3,7 +3,9 @@ from flask import Flask, jsonify, render_template, request
 from flask_cors import CORS
 from dotenv import load_dotenv
 
+from src.config.app_config import AppConfig
 from src.database.manager import setup_database_tables
+from src.database.connection import get_database_connection
 from src.database.preference_operations import get_training_data_from_database, get_unrated_videos_with_features_from_database, get_rated_count_from_database, save_video_rating_to_database
 from src.database.video_operations import get_unrated_videos_from_database
 from src.ml.model_training import create_recommendation_model, train_model_on_user_preferences
@@ -16,7 +18,7 @@ CORS(app)
 
 class DashboardAPI:
     def __init__(self):
-        self.db_path = "video_inspiration.db"
+        self.db_path = AppConfig.DATABASE_PATH
         self.model = None
         self.model_trained = False
         setup_database_tables(self.db_path)
@@ -24,7 +26,7 @@ class DashboardAPI:
 
     def _initialize_model(self):
         rated_count = get_rated_count_from_database(self.db_path)
-        if rated_count >= 10:
+        if rated_count >= AppConfig.ML_TRAINING_THRESHOLD:
             self.model = create_recommendation_model()
             training_data = get_training_data_from_database(self.db_path)
             success = train_model_on_user_preferences(self.model, training_data)
@@ -47,23 +49,22 @@ class DashboardAPI:
         import sqlite3
         
         try:
-            conn = sqlite3.connect(self.db_path)
-            conn.row_factory = sqlite3.Row
-            cursor = conn.cursor()
-            
-            # Get liked videos with features
-            query = """
-            SELECT v.*, vf.*, p.liked
-            FROM videos v 
-            JOIN video_features vf ON v.id = vf.video_id
-            JOIN preferences p ON v.id = p.video_id
-            WHERE p.liked = 1
-            ORDER BY v.view_count DESC
-            """
-            
-            cursor.execute(query)
-            results = cursor.fetchall()
-            conn.close()
+            with get_database_connection(self.db_path) as conn:
+                conn.row_factory = sqlite3.Row
+                cursor = conn.cursor()
+                
+                # Get liked videos with features
+                query = """
+                SELECT v.*, vf.*, p.liked
+                FROM videos v 
+                JOIN video_features vf ON v.id = vf.video_id
+                JOIN preferences p ON v.id = p.video_id
+                WHERE p.liked = 1
+                ORDER BY v.view_count DESC
+                """
+                
+                cursor.execute(query)
+                results = cursor.fetchall()
             
             liked_videos = []
             for row in results:
@@ -176,7 +177,7 @@ def rate_video():
         model_retrained = False
         rated_count = get_rated_count_from_database(dashboard_api.db_path)
         
-        if rated_count >= 10:  # Minimum ratings needed for training
+        if rated_count >= AppConfig.ML_TRAINING_THRESHOLD:  # Minimum ratings needed for training
             # Retrain the model with new data
             if not dashboard_api.model:
                 dashboard_api.model = create_recommendation_model()

@@ -7,25 +7,27 @@ import json
 import requests
 from typing import List, Optional
 
+from src.config.app_config import OllamaConfig
+
 
 def check_ollama_running() -> bool:
     """Check if Ollama service is running."""
     try:
-        response = requests.get("http://localhost:11434/api/tags", timeout=2)
+        response = requests.get(OllamaConfig.TAGS_ENDPOINT, timeout=2)
         return response.status_code == 200
     except (requests.ConnectionError, requests.Timeout):
         return False
 
 
 def get_model_from_env() -> str:
-    """Get Ollama model from environment variable, default to llama3.2:3b."""
-    return os.getenv('OLLAMA_MODEL', 'llama3.2:3b')
+    """Get Ollama model from environment variable."""
+    return OllamaConfig.get_model_from_env()
 
 
 def check_model_exists(model: str) -> bool:
     """Check if specified model is available in Ollama."""
     try:
-        response = requests.get("http://localhost:11434/api/tags", timeout=5)
+        response = requests.get(OllamaConfig.TAGS_ENDPOINT, timeout=5)
         if response.status_code == 200:
             models = response.json().get('models', [])
             return any(m['name'] == model for m in models)
@@ -37,7 +39,7 @@ def check_model_exists(model: str) -> bool:
 def list_available_models() -> List[str]:
     """List all available Ollama models."""
     try:
-        response = requests.get("http://localhost:11434/api/tags", timeout=5)
+        response = requests.get(OllamaConfig.TAGS_ENDPOINT, timeout=5)
         if response.status_code == 200:
             models = response.json().get('models', [])
             return [m['name'] for m in models]
@@ -46,17 +48,20 @@ def list_available_models() -> List[str]:
     return []
 
 
-def generate_keywords_from_topic(topic: str, num_queries: int = 15) -> Optional[List[str]]:
+def generate_keywords_from_topic(topic: str, num_queries: int = None) -> Optional[List[str]]:
     """
     Generate YouTube search keywords from a topic using Ollama.
     
     Args:
         topic: The topic to generate keywords for
-        num_queries: Number of search queries to generate
+        num_queries: Number of search queries to generate (uses default if None)
         
     Returns:
         List of search queries or None if error
     """
+    if num_queries is None:
+        num_queries = OllamaConfig.DEFAULT_NUM_QUERIES
+        
     if not check_ollama_running():
         print("Error: Ollama service is not running.")
         print("Please start Ollama with: ollama serve")
@@ -70,7 +75,7 @@ def generate_keywords_from_topic(topic: str, num_queries: int = 15) -> Optional[
         if available:
             print(f"Available models: {', '.join(available)}")
         else:
-            print("No models found. Please pull a model with: ollama pull llama3.2")
+            print(f"No models found. Please pull a model with: ollama pull {OllamaConfig.DEFAULT_MODEL}")
         return None
     
     prompt = f"""Generate {num_queries} YouTube search queries for finding programming/coding videos about: {topic}
@@ -90,13 +95,13 @@ Return only the search queries, one per line. Do not include numbering or bullet
     
     try:
         response = requests.post(
-            "http://localhost:11434/api/generate",
+            OllamaConfig.GENERATE_ENDPOINT,
             json={
                 "model": model,
                 "prompt": prompt,
                 "stream": False
             },
-            timeout=30
+            timeout=OllamaConfig.REQUEST_TIMEOUT
         )
         
         if response.status_code == 200:

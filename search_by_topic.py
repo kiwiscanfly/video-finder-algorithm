@@ -1,25 +1,22 @@
 #!/usr/bin/env python3
 """
 Search for YouTube videos based on user-provided topics using Ollama LLMs.
+
+Refactored to use new service architecture for cleaner code.
 """
 
 import os
 import sys
 import argparse
 from dotenv import load_dotenv
-from typing import List
 
-from src.database.manager import setup_database_tables
-from src.database.video_operations import save_videos_to_database, save_video_features_to_database
-from src.youtube.search import search_youtube_videos_by_query
-from src.youtube.details import get_video_details_from_youtube
-from src.youtube.utils import remove_duplicate_videos
-from src.ml.feature_extraction import extract_all_features_from_video
+from src.services.video_search_service import TopicVideoSearchService
 from src.ollama.keyword_generator import (
     generate_keywords_from_topic, 
     fallback_manual_keywords,
     check_ollama_running
 )
+from src.config.app_config import AppConfig
 
 
 def search_videos_by_topic(topic: str, use_fallback: bool = False) -> None:
@@ -35,11 +32,8 @@ def search_videos_by_topic(topic: str, use_fallback: bool = False) -> None:
         print("Error: YOUTUBE_API_KEY not found in environment variables")
         return
 
-    db_path = "video_inspiration.db"
-    setup_database_tables(db_path)
-
-    print(f"\n🎯 Topic: {topic}")
-    print("=" * 50)
+    # Use the new service architecture
+    search_service = TopicVideoSearchService(api_key)
     
     # Generate search keywords
     if use_fallback:
@@ -63,49 +57,15 @@ def search_videos_by_topic(topic: str, use_fallback: bool = False) -> None:
     if len(keywords) > 5:
         print(f"   ... and {len(keywords) - 5} more")
     
-    print("\n🔍 Searching YouTube for videos...")
-    print("-" * 40)
-    
-    all_videos = []
-    total_found = 0
-    
-    for i, query in enumerate(keywords, 1):
-        print(f"  [{i}/{len(keywords)}] Searching: {query[:50]}...")
-        
-        try:
-            # Search for fewer videos per query to avoid API limits
-            video_ids = search_youtube_videos_by_query(api_key, query, 5)
-            
-            if video_ids:
-                videos = get_video_details_from_youtube(api_key, video_ids)
-                all_videos.extend(videos)
-                total_found += len(videos)
-                print(f"       ✓ Found {len(videos)} videos")
-            else:
-                print(f"       - No videos found")
-                
-        except Exception as e:
-            print(f"       ✗ Error: {str(e)}")
-    
-    print(f"\n📊 Total videos found: {total_found}")
-    
-    # Remove duplicates
-    unique_videos = remove_duplicate_videos(all_videos)
-    print(f"📊 Unique videos: {len(unique_videos)}")
+    # Use the service to search and save videos
+    unique_videos = search_service.search_topic_with_keywords(topic, keywords)
     
     if unique_videos:
-        print("\n💾 Saving videos to database...")
-        save_videos_to_database(unique_videos, db_path)
-        
-        print("🧮 Extracting features...")
-        for video in unique_videos:
-            features = extract_all_features_from_video(video)
-            save_video_features_to_database(video['id'], features, db_path)
-        
         print(f"\n✅ Successfully saved {len(unique_videos)} unique videos!")
         print("\n🎬 Sample videos found:")
         for video in unique_videos[:3]:
-            print(f"  • {video['title'][:70]}...")
+            title = video['title'][:70] + "..." if len(video['title']) > 70 else video['title']
+            print(f"  • {title}")
             print(f"    Channel: {video['channel_name']}")
             print(f"    Views: {video['view_count']:,}")
             print()
