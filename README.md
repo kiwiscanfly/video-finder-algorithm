@@ -7,7 +7,7 @@ An intelligent AI-powered YouTube video recommendation system that learns your p
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
 ![Contributions welcome](https://img.shields.io/badge/contributions-welcome-orange.svg)
 
-Based on a project by [rosadiaznewyork](https://github.com/rosadiaznewyork)
+Built on top of on a project by [rosadiaznewyork](https://github.com/rosadiaznewyork) for the YouTube video [I Got So Annoyed with YouTube I Built My Own](https://www.youtube.com/watch?v=r5Y1I1Zol2k).
 
 ## ✨ Revolutionary Features
 
