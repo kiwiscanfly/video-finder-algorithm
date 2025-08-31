@@ -14,7 +14,7 @@ source venv/bin/activate
 
 # Install dependencies
 echo "📚 Installing dependencies..."
-pip install requests pandas scikit-learn numpy python-dotenv flask flask-cors
+pip install requests pandas scikit-learn numpy python-dotenv flask flask-cors google-auth google-auth-oauthlib google-auth-httplib2 google-api-python-client
 
 echo "✅ Setup complete!"
 

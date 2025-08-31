@@ -1,9 +1,12 @@
 import os
-from flask import Flask, jsonify, render_template, request
+import requests
+from flask import Flask, jsonify, render_template, request, session, redirect, url_for
 from flask_cors import CORS
 from dotenv import load_dotenv
+import secrets
+from functools import wraps
 
-from src.config.app_config import AppConfig
+from src.config.app_config import AppConfig, OAuthConfig
 from src.database.manager import setup_database_tables
 from src.database.connection import get_database_connection
 from src.database.preference_operations import get_training_data_from_database, get_unrated_videos_with_features_from_database, get_rated_count_from_database, save_video_rating_to_database, remove_video_preference
@@ -12,17 +15,34 @@ from src.services.video_search_service import TopicVideoSearchService
 from src.database.video_operations import get_unrated_videos_from_database
 from src.ml.model_training import create_recommendation_model, train_model_on_user_preferences
 from src.ml.predictions import predict_video_preferences_with_model
+from src.auth.oauth_service import OAuthService
+from src.auth.youtube_user_service import YouTubeUserService
+from src.ml.personalized_recommendations import PersonalizedRecommendationService
 
 load_dotenv()
 
 app = Flask(__name__)
-CORS(app)
+app.secret_key = os.getenv('FLASK_SECRET_KEY', secrets.token_hex(32))
+
+# Configure session settings
+app.config.update(
+    SESSION_COOKIE_SECURE=True,  # Now using HTTPS
+    SESSION_COOKIE_HTTPONLY=True,
+    SESSION_COOKIE_SAMESITE='Lax',
+    PERMANENT_SESSION_LIFETIME=3600  # 1 hour
+)
+
+# Configure CORS to allow credentials (needed for sessions)
+CORS(app, supports_credentials=True, origins=['https://localhost:5001'])
 
 class DashboardAPI:
     def __init__(self):
         self.db_path = AppConfig.DATABASE_PATH
         self.model = None
         self.model_trained = False
+        self.oauth_service = OAuthService(self.db_path)
+        self.youtube_user_service = YouTubeUserService(self.db_path)
+        self.personalized_service = PersonalizedRecommendationService(self.db_path)
         setup_database_tables(self.db_path)
         self._initialize_model()
 
@@ -35,9 +55,22 @@ class DashboardAPI:
             if success:
                 self.model_trained = True
 
-    def get_recommendations(self):
+    def get_recommendations(self, user_id: str = None):
         if self.model_trained and self.model:
             video_features = get_unrated_videos_with_features_from_database(self.db_path)
+            
+            # Use enhanced personalization if user is authenticated and has YouTube data
+            if user_id:
+                try:
+                    recommendations = self.personalized_service.get_enhanced_recommendations(
+                        user_id, self.model, video_features, top_n=24
+                    )
+                    return recommendations
+                except Exception as e:
+                    print(f"Enhanced personalization failed, falling back to standard: {e}")
+                    # Fall back to standard ML recommendations
+            
+            # Standard ML recommendations
             recommendations = predict_video_preferences_with_model(self.model, video_features, top_n=24)
             return recommendations  # Return 24 videos for dashboard
         else:
@@ -124,14 +157,198 @@ class DashboardAPI:
 
 dashboard_api = DashboardAPI()
 
+def oauth_required(f):
+    """Decorator to require OAuth authentication for routes."""
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if 'user_id' not in session:
+            return jsonify({
+                'success': False,
+                'error': 'Authentication required',
+                'auth_required': True
+            }), 401
+        return f(*args, **kwargs)
+    return decorated_function
+
 @app.route('/')
 def dashboard():
     return render_template('dashboard.html')
 
+# OAuth routes
+@app.route('/auth/login')
+def oauth_login():
+    """Initiate OAuth login flow."""
+    try:
+        if not OAuthConfig.is_configured():
+            return jsonify({
+                'success': False,
+                'error': 'OAuth not configured. Please set GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET.'
+            }), 500
+        
+        # Generate and store state for security
+        state = secrets.token_urlsafe(32)
+        session['oauth_state'] = state
+        
+        # Also store in database as backup
+        with get_database_connection(dashboard_api.db_path) as conn:
+            cursor = conn.cursor()
+            cursor.execute('''
+                CREATE TABLE IF NOT EXISTS oauth_states (
+                    state TEXT PRIMARY KEY,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            ''')
+            cursor.execute('INSERT OR REPLACE INTO oauth_states (state) VALUES (?)', (state,))
+            
+        print(f"Debug - Generated state: {state}")
+        print(f"Debug - Stored in session: {session.get('oauth_state')}")
+        print(f"Debug - Also stored in database")
+        
+        # Get authorization URL
+        auth_url, _ = dashboard_api.oauth_service.get_authorization_url(state)
+        print(f"Debug - Auth URL: {auth_url}")
+        
+        return redirect(auth_url)
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': f'OAuth login failed: {str(e)}'
+        }), 500
+
+@app.route('/auth/callback')
+def oauth_callback():
+    """Handle OAuth callback."""
+    try:
+        # Debug logging
+        state = request.args.get('state')
+        session_state = session.get('oauth_state')
+        print(f"Debug - Received state: {state}")
+        print(f"Debug - Session state: {session_state}")
+        print(f"Debug - Session contents: {dict(session)}")
+        
+        # Verify state parameter (check session first, then database)
+        state_valid = False
+        if state and state == session_state:
+            state_valid = True
+            print("Debug - State validated from session")
+        elif state:
+            # Check database as fallback
+            with get_database_connection(dashboard_api.db_path) as conn:
+                cursor = conn.cursor()
+                cursor.execute('SELECT state FROM oauth_states WHERE state = ?', (state,))
+                if cursor.fetchone():
+                    state_valid = True
+                    # Clean up used state
+                    cursor.execute('DELETE FROM oauth_states WHERE state = ?', (state,))
+                    print("Debug - State validated from database")
+        
+        if not state_valid:
+            error_msg = f'Invalid state parameter. Received: {state}, Expected: {session_state}'
+            print(f"Debug - State validation failed: {error_msg}")
+            return jsonify({
+                'success': False,
+                'error': 'Invalid state parameter',
+                'debug': error_msg if app.debug else None
+            }), 400
+        
+        # Handle authorization response
+        authorization_response = request.url
+        user_info = dashboard_api.oauth_service.handle_authorization_callback(
+            authorization_response, state
+        )
+        
+        if not user_info:
+            return jsonify({
+                'success': False,
+                'error': 'OAuth authentication failed'
+            }), 400
+        
+        # Store user in session
+        session['user_id'] = user_info['id']
+        session['user_name'] = user_info['name']
+        session['user_email'] = user_info['email']
+        
+        # Store user in database
+        with get_database_connection(dashboard_api.db_path) as conn:
+            cursor = conn.cursor()
+            cursor.execute('''
+                INSERT OR REPLACE INTO users (id, email, name, profile_picture, updated_at)
+                VALUES (?, ?, ?, ?, datetime('now'))
+            ''', (
+                user_info['id'],
+                user_info['email'],
+                user_info['name'],
+                user_info.get('picture')
+            ))
+        
+        # Clean up session
+        session.pop('oauth_state', None)
+        
+        # Redirect to dashboard with YouTube profile active
+        return redirect('/?view=youtube')
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': f'OAuth callback failed: {str(e)}'
+        }), 500
+
+@app.route('/auth/logout', methods=['POST'])
+def oauth_logout():
+    """Logout user and revoke OAuth access."""
+    try:
+        user_id = session.get('user_id')
+        if user_id:
+            # Revoke OAuth access
+            dashboard_api.oauth_service.revoke_user_access(user_id)
+        
+        # Clear session
+        session.clear()
+        
+        return jsonify({
+            'success': True,
+            'message': 'Logged out successfully'
+        })
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': f'Logout failed: {str(e)}'
+        }), 500
+
+@app.route('/api/auth/status')
+def auth_status():
+    """Get current authentication status."""
+    try:
+        if 'user_id' not in session:
+            return jsonify({
+                'authenticated': False,
+                'oauth_configured': OAuthConfig.is_configured()
+            })
+        
+        return jsonify({
+            'authenticated': True,
+            'user': {
+                'id': session['user_id'],
+                'name': session.get('user_name'),
+                'email': session.get('user_email')
+            },
+            'oauth_configured': True
+        })
+        
+    except Exception as e:
+        return jsonify({
+            'authenticated': False,
+            'error': str(e)
+        }), 500
+
 @app.route('/api/recommendations')
 def get_recommendations():
     try:
-        recommendations = dashboard_api.get_recommendations()
+        # Pass user_id if authenticated for enhanced personalization
+        user_id = session.get('user_id')
+        recommendations = dashboard_api.get_recommendations(user_id)
         
         formatted_recommendations = []
         for video in recommendations:
@@ -143,14 +360,18 @@ def get_recommendations():
                 'url': video['url'],
                 'thumbnail': f"https://img.youtube.com/vi/{video['id']}/hqdefault.jpg",
                 'confidence': round(video.get('like_probability', 0.5) * 100),
-                'views_formatted': format_view_count(video['view_count'])
+                'views_formatted': format_view_count(video['view_count']),
+                'content_similarity': video.get('content_similarity', 0),
+                'pattern_boost': video.get('pattern_boost', 1.0)
             })
         
         return jsonify({
             'success': True,
             'videos': formatted_recommendations,
             'model_trained': dashboard_api.model_trained,
-            'total_ratings': get_rated_count_from_database(dashboard_api.db_path)
+            'total_ratings': get_rated_count_from_database(dashboard_api.db_path),
+            'personalized': bool(user_id),
+            'enhancement_active': bool(user_id and dashboard_api.model_trained)
         })
     
     except Exception as e:
@@ -673,5 +894,443 @@ def format_view_count(count):
     else:
         return f"{count} views"
 
+# YouTube profile API endpoints
+@app.route('/api/youtube/profile')
+@oauth_required
+def get_youtube_profile():
+    """Get user's YouTube profile and data."""
+    try:
+        user_id = session['user_id']
+        
+        # Try cached data first
+        user_data = dashboard_api.youtube_user_service.get_cached_user_data(user_id)
+        
+        if not user_data:
+            # Fetch fresh data
+            user_data = dashboard_api.youtube_user_service.get_user_youtube_data(user_id)
+        
+        if not user_data:
+            return jsonify({
+                'success': False,
+                'error': 'Unable to fetch YouTube data. Please check your OAuth permissions.',
+                'suggestions': [
+                    'Ensure you granted YouTube read access during login',
+                    'Try logging out and logging in again',
+                    'Check if your YouTube account has any content restrictions'
+                ]
+            }), 400
+        
+        # Format response for frontend
+        response_data = {
+            'success': True,
+            'profile': {
+                'channel': user_data['channel_info'],
+                'stats': {
+                    'liked_videos': len(user_data.get('liked_videos', [])),
+                    'subscriptions': len(user_data.get('subscriptions', [])),
+                    'activities': len(user_data.get('activities', []))
+                }
+            },
+            'liked_videos': user_data.get('liked_videos', []),  # All available videos for pagination
+            'subscriptions': user_data.get('subscriptions', [])[:20],  # First 20 for preview
+            'recent_activities': user_data.get('activities', [])[:10]  # First 10 for preview
+        }
+        
+        return jsonify(response_data)
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': f'Failed to fetch YouTube profile: {str(e)}'
+        }), 500
+
+@app.route('/api/youtube/sync', methods=['POST'])
+@oauth_required
+def sync_youtube_data():
+    """Force refresh of user's YouTube data."""
+    try:
+        user_id = session['user_id']
+        
+        # Fetch fresh data
+        user_data = dashboard_api.youtube_user_service.get_user_youtube_data(user_id)
+        
+        if not user_data:
+            return jsonify({
+                'success': False,
+                'error': 'Failed to sync YouTube data. Check your OAuth permissions.'
+            }), 400
+        
+        return jsonify({
+            'success': True,
+            'message': 'YouTube data synced successfully',
+            'stats': {
+                'liked_videos': len(user_data.get('liked_videos', [])),
+                'subscriptions': len(user_data.get('subscriptions', [])),
+                'activities': len(user_data.get('activities', []))
+            }
+        })
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': f'Failed to sync YouTube data: {str(e)}'
+        }), 500
+
+@app.route('/api/youtube/personalization-preview')
+@oauth_required
+def get_personalization_preview():
+    """Get preview of how YouTube data will enhance personalization."""
+    try:
+        user_id = session['user_id']
+        
+        # Get personalization tags from YouTube data
+        tags = dashboard_api.youtube_user_service.get_youtube_tags_for_personalization(user_id)
+        
+        # Get current recommendation stats
+        rated_count = get_rated_count_from_database(dashboard_api.db_path)
+        
+        return jsonify({
+            'success': True,
+            'personalization': {
+                'youtube_tags': tags[:50],  # First 50 tags
+                'total_tags': len(tags),
+                'current_ratings': rated_count,
+                'enhancement_potential': 'high' if len(tags) > 20 else 'moderate' if len(tags) > 5 else 'low',
+                'description': f'Found {len(tags)} personalization tags from your YouTube activity'
+            },
+            'recommendations': {
+                'before': 'Based on manual ratings only',
+                'after': 'Enhanced with YouTube history patterns'
+            }
+        })
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': f'Failed to generate personalization preview: {str(e)}'
+        }), 500
+
+@app.route('/api/youtube/personalization-stats')
+@oauth_required
+def get_personalization_stats():
+    """Get detailed personalization statistics."""
+    try:
+        user_id = session['user_id']
+        
+        stats = dashboard_api.personalized_service.get_personalization_stats(user_id)
+        
+        return jsonify({
+            'success': True,
+            'stats': stats
+        })
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': f'Failed to get personalization stats: {str(e)}'
+        }), 500
+
+@app.route('/api/import-youtube-video', methods=['POST'])
+@oauth_required
+def import_youtube_video():
+    """Import a video from user's YouTube profile to MyTube collection."""
+    try:
+        data = request.json
+        video_id = data.get('video_id')
+        user_id = session['user_id']
+        
+        if not video_id:
+            return jsonify({
+                'success': False,
+                'error': 'video_id is required'
+            }), 400
+        
+        # Get user's YouTube data to find the video details
+        user_data = dashboard_api.youtube_user_service.get_cached_user_data(user_id)
+        if not user_data:
+            user_data = dashboard_api.youtube_user_service.get_user_youtube_data(user_id)
+        
+        if not user_data:
+            return jsonify({
+                'success': False,
+                'error': 'Unable to access YouTube data. Please sync your profile first.'
+            }), 400
+        
+        # Find the video in the user's liked videos
+        youtube_video = None
+        for video in user_data.get('liked_videos', []):
+            if video.get('id') == video_id:
+                youtube_video = video
+                break
+        
+        if not youtube_video:
+            return jsonify({
+                'success': False,
+                'error': 'Video not found in your YouTube liked videos'
+            }), 404
+        
+        # Check if video already exists in MyTube
+        with get_database_connection(dashboard_api.db_path) as conn:
+            cursor = conn.cursor()
+            cursor.execute('''
+                SELECT v.title FROM videos v
+                JOIN preferences p ON v.id = p.video_id
+                WHERE v.id = ? AND p.liked = 1
+            ''', (video_id,))
+            existing = cursor.fetchone()
+            
+            if existing:
+                return jsonify({
+                    'success': False,
+                    'error': f'Video already in your MyTube collection: "{existing[0]}"'
+                }), 409
+        
+        # Create video record from YouTube data
+        video_record = {
+            'id': youtube_video['id'],
+            'title': youtube_video['title'],
+            'description': youtube_video.get('description', ''),
+            'channel_name': youtube_video['channel_name'],
+            'view_count': youtube_video.get('view_count', 0),
+            'like_count': youtube_video.get('like_count', 0),
+            'comment_count': 0,  # Not available in YouTube liked videos API
+            'duration': youtube_video.get('duration', ''),
+            'published_at': youtube_video.get('published_at', ''),
+            'thumbnail_url': f"https://img.youtube.com/vi/{video_id}/hqdefault.jpg",
+            'tags': ','.join(youtube_video.get('tags', [])),
+            'category_id': 28,  # Science & Technology default
+            'url': f"https://www.youtube.com/watch?v={video_id}"
+        }
+        
+        # Save video to database
+        from src.database.video_operations import save_videos_to_database, save_video_features_to_database
+        save_videos_to_database([video_record], dashboard_api.db_path)
+        
+        # Extract and save features
+        from src.ml.feature_extraction import extract_all_features_from_video
+        features = extract_all_features_from_video(video_record)
+        save_video_features_to_database(video_record['id'], features, dashboard_api.db_path)
+        
+        # Add to MyTube (liked videos)
+        save_video_rating_to_database(video_record['id'], True, "Imported from YouTube profile", dashboard_api.db_path)
+        
+        # Check if we should retrain the model
+        model_retrained = False
+        rated_count = get_rated_count_from_database(dashboard_api.db_path)
+        
+        if rated_count >= AppConfig.ML_TRAINING_THRESHOLD:
+            if not dashboard_api.model:
+                dashboard_api.model = create_recommendation_model()
+            
+            training_data = get_training_data_from_database(dashboard_api.db_path)
+            success = train_model_on_user_preferences(dashboard_api.model, training_data)
+            
+            if success:
+                dashboard_api.model_trained = True
+                model_retrained = True
+        
+        return jsonify({
+            'success': True,
+            'message': f'Successfully imported "{video_record["title"]}" to MyTube',
+            'video': {
+                'id': video_record['id'],
+                'title': video_record['title'],
+                'channel_name': video_record['channel_name'],
+                'view_count': video_record['view_count']
+            },
+            'model_retrained': model_retrained,
+            'total_mytubes': rated_count
+        })
+        
+    except Exception as e:
+        import traceback
+        print(f"Error importing YouTube video: {traceback.format_exc()}")
+        
+        return jsonify({
+            'success': False,
+            'error': f'Failed to import video: {str(e)}'
+        }), 500
+
+@app.route('/api/video-tags/<video_id>')
+def get_video_tags(video_id):
+    """Get tags and metadata for a specific video for similarity search."""
+    try:
+        with get_database_connection(dashboard_api.db_path) as conn:
+            cursor = conn.cursor()
+            
+            # Get video details and tags
+            cursor.execute('''
+                SELECT v.id, v.title, v.description, v.channel_name, v.tags, v.category_id
+                FROM videos v
+                JOIN preferences p ON v.id = p.video_id
+                WHERE v.id = ? AND p.liked = 1
+            ''', (video_id,))
+            
+            video_row = cursor.fetchone()
+            if not video_row:
+                return jsonify({
+                    'success': False,
+                    'error': 'Video not found in MyTube collection'
+                }), 404
+            
+            video_data = {
+                'id': video_row[0],
+                'title': video_row[1],
+                'description': video_row[2] or '',
+                'channel_name': video_row[3],
+                'tags': video_row[4] or '',
+                'category_id': video_row[5]
+            }
+            
+            # Parse tags from the stored string
+            tags_list = []
+            if video_data['tags']:
+                tags_list = [tag.strip() for tag in video_data['tags'].split(',') if tag.strip()]
+            
+            # If no tags from video metadata, extract keywords from title and description
+            if not tags_list:
+                text_to_analyze = f"{video_data['title']} {video_data['description']}"
+                
+                # Extract potential keywords using simple text analysis
+                import re
+                # Remove common words and extract meaningful keywords
+                common_words = {'the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'of', 'with', 'by', 'this', 'that', 'is', 'are', 'was', 'were', 'be', 'been', 'have', 'has', 'had', 'do', 'does', 'did', 'will', 'would', 'could', 'should'}
+                
+                # Extract words and clean them
+                words = re.findall(r'\b[a-zA-Z]{3,}\b', text_to_analyze.lower())
+                tags_list = [word for word in words if word not in common_words][:10]
+            
+            return jsonify({
+                'success': True,
+                'video': {
+                    'id': video_data['id'],
+                    'title': video_data['title'],
+                    'channel_name': video_data['channel_name']
+                },
+                'tags': tags_list[:10],  # Limit to first 10 tags
+                'total_tags': len(tags_list)
+            })
+            
+    except Exception as e:
+        import traceback
+        print(f"Error getting video tags: {traceback.format_exc()}")
+        
+        return jsonify({
+            'success': False,
+            'error': f'Failed to get video tags: {str(e)}'
+        }), 500
+
+@app.route('/api/find-similar-videos', methods=['POST'])
+def find_similar_videos():
+    """Find videos similar to a liked video using its tags."""
+    try:
+        data = request.json
+        video_id = data.get('video_id')
+        search_topic = data.get('search_topic')
+        
+        if not video_id:
+            return jsonify({
+                'success': False,
+                'error': 'video_id is required'
+            }), 400
+        
+        if not search_topic:
+            return jsonify({
+                'success': False,
+                'error': 'search_topic is required'
+            }), 400
+        
+        # Get YouTube API key
+        youtube_api_key = os.getenv('YOUTUBE_API_KEY')
+        if not youtube_api_key:
+            return jsonify({
+                'success': False,
+                'error': 'YouTube API key not configured'
+            }), 500
+        
+        # Create a new search session for this similarity search
+        session_id = create_search_session(f"Similar to video {video_id}", dashboard_api.db_path)
+        
+        # Initialize the search service
+        search_service = TopicVideoSearchService(youtube_api_key, dashboard_api.db_path)
+        
+        # Test API connection first
+        if not search_service.test_api_connection():
+            return jsonify({
+                'success': False,
+                'error': 'YouTube API connection failed. Please check your API key and quota.',
+                'session_id': session_id
+            }), 500
+        
+        # Generate keywords using Ollama from the search topic (which is made from video tags)
+        from src.ollama.keyword_generator import generate_keywords_from_topic
+        keywords = generate_keywords_from_topic(search_topic)
+        
+        if not keywords:
+            # Fallback: use the search topic directly as keywords
+            keywords = search_topic.split()
+        
+        # Add session metadata
+        session_metadata = {
+            'search_session_id': session_id,
+            'search_topic': search_topic
+        }
+        
+        # Search for videos using the generated keywords with session metadata  
+        max_queries = 3  # Limit to avoid overwhelming the API for similarity search
+        max_results_per_query = 5  # Get more results for better similarity matching
+        
+        videos = search_service.search_and_save_videos(
+            queries=keywords[:max_queries],
+            max_results_per_query=max_results_per_query,
+            session_metadata=session_metadata
+        )
+        
+        if not videos:
+            return jsonify({
+                'success': False,
+                'error': 'No similar videos found for this topic'
+            }), 404
+        
+        # Update search session with video count
+        update_search_session_video_count(session_id, len(videos), dashboard_api.db_path)
+        
+        # Format videos for response (same as topic search endpoint)
+        formatted_videos = []
+        for video in videos:
+            formatted_videos.append({
+                'id': video['id'],
+                'title': video['title'],
+                'channel_name': video['channel_name'],
+                'view_count': video['view_count'],
+                'url': video['url'],
+                'thumbnail': f"https://img.youtube.com/vi/{video['id']}/hqdefault.jpg",
+                'views_formatted': format_view_count(video['view_count']),
+                'search_topic': search_topic
+            })
+        
+        # Filter out the original video from results if it appears
+        similar_videos = [v for v in formatted_videos if v['id'] != video_id]
+        
+        return jsonify({
+            'success': True,
+            'videos': similar_videos,
+            'session_id': session_id,
+            'total_found': len(similar_videos),
+            'search_topic': search_topic,
+            'original_video_id': video_id,
+            'keywords_used': keywords[:max_queries]
+        })
+        
+    except Exception as e:
+        import traceback
+        print(f"Error finding similar videos: {traceback.format_exc()}")
+        
+        return jsonify({
+            'success': False,
+            'error': f'Failed to find similar videos: {str(e)}'
+        }), 500
+
 if __name__ == '__main__':
-    app.run(debug=True, port=5001)
+    # Use HTTPS for OAuth compliance
+    app.run(debug=True, port=5001, host='localhost', ssl_context='adhoc')

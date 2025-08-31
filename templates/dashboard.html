@@ -12,10 +12,12 @@
         }
 
         body {
-            font-family: 'Roboto', sans-serif;
-            background-color: #0f0f0f;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 100%);
+            background-attachment: fixed;
             color: #ffffff;
             overflow-x: hidden;
+            line-height: 1.5;
         }
 
         .header {
@@ -113,12 +115,15 @@
         }
 
         .section-title {
-            font-size: 20px;
-            font-weight: 500;
-            margin-bottom: 16px;
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 24px;
+            margin-top: 24px;
+            color: #ffffff;
             display: flex;
             align-items: center;
-            gap: 12px;
+            gap: 16px;
+            padding: 0 24px;
         }
 
         .ai-badge {
@@ -460,6 +465,153 @@
             border-color: #ff0000;
         }
 
+        .auth-section {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .user-profile {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background-color: #1a1a1a;
+            padding: 6px 12px;
+            border-radius: 20px;
+            border: 1px solid #333;
+        }
+
+        /* Enhanced video actions styling */
+        .video-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 12px;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .action-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            padding: 8px 12px;
+            border-radius: 8px;
+            border: 1px solid transparent;
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-decoration: none;
+            background: linear-gradient(135deg, #2a2a2a, #1a1a1a);
+            color: white;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .action-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
+        }
+
+        .action-btn:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .find-similar-btn {
+            flex: 1;
+            background: linear-gradient(135deg, #0066cc, #004499);
+            border-color: #0066cc;
+        }
+
+        .find-similar-btn:hover {
+            background: linear-gradient(135deg, #0077dd, #0055aa);
+            border-color: #0077dd;
+        }
+
+        .find-similar-btn:disabled {
+            background: linear-gradient(135deg, #666, #555);
+            border-color: #666;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .remove-btn-modern {
+            flex-shrink: 0;
+            background: linear-gradient(135deg, #666, #555);
+            border-color: #666;
+            width: 40px;
+            padding: 8px;
+        }
+
+        .remove-btn-modern:hover {
+            background: linear-gradient(135deg, #ff4444, #cc3333);
+            border-color: #ff4444;
+        }
+
+        .btn-icon {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+        }
+
+        .btn-text {
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        /* Enhanced video card styling */
+        .video-card {
+            background: linear-gradient(145deg, #1e1e1e, #0f0f0f);
+            border: 1px solid #333;
+            border-radius: 12px;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+        }
+
+        .video-card:hover {
+            transform: translateY(-2px);
+            border-color: #555;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4);
+        }
+
+        .video-info {
+            padding: 16px;
+        }
+
+        .video-title {
+            font-size: 14px;
+            font-weight: 600;
+            line-height: 1.4;
+            color: #ffffff;
+            margin-bottom: 8px;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .video-meta {
+            font-size: 12px;
+            color: #aaa;
+            margin-bottom: 8px;
+        }
+
+        .confidence-badge {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+            background: linear-gradient(135deg, #00d400, #00aa00);
+            color: white;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
         .view-container {
             display: none;
         }
@@ -542,6 +694,30 @@
             <button class="nav-btn" id="historyBtn" onclick="switchView('history')">
                 📜 Search History
             </button>
+            <button class="nav-btn" id="youtubeBtn" onclick="switchView('youtube')" style="display: none;">
+                🎥 YouTube Profile
+            </button>
+        </div>
+        
+        <!-- Authentication Section -->
+        <div class="auth-section" id="authSection">
+            <div id="authLoading" style="display: none;">
+                <div style="width: 20px; height: 20px; border: 2px solid #333; border-top: 2px solid #ff0000; border-radius: 50%; animation: spin 1s linear infinite;"></div>
+            </div>
+            <div id="authButtons" style="display: none;">
+                <button class="nav-btn" id="loginBtn" onclick="loginWithYouTube()" style="background: #ff0000; border-color: #ff0000;">
+                    🎥 Connect YouTube
+                </button>
+            </div>
+            <div id="userInfo" style="display: none;">
+                <div class="user-profile">
+                    <img id="userAvatar" src="" alt="User" style="width: 32px; height: 32px; border-radius: 50%; margin-right: 8px;">
+                    <span id="userName" style="margin-right: 12px; font-weight: 500;"></span>
+                    <button class="nav-btn" id="logoutBtn" onclick="logoutFromYouTube()" style="background: #666; border-color: #666; font-size: 12px;">
+                        Logout
+                    </button>
+                </div>
+            </div>
         </div>
     </header>
 
@@ -628,6 +804,96 @@
             
             <div class="video-grid" id="searchVideoGrid">
                 <!-- Search results will be loaded here -->
+            </div>
+        </div>
+
+        <!-- YouTube Profile View -->
+        <div class="view-container" id="youtubeView">
+            <h1 class="section-title" id="youtubeSectionTitle" style="display: none;">
+                YouTube Profile
+                <span class="ai-badge">CONNECTED</span>
+            </h1>
+            
+            <!-- Profile Info Card -->
+            <div id="youtubeProfileCard" style="display: none; background-color: #1a1a1a; border: 1px solid #333; border-radius: 12px; padding: 24px; margin-bottom: 24px;">
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px;">
+                    <div>
+                        <h2 id="channelTitle" style="color: white; font-size: 24px; margin-bottom: 8px;"></h2>
+                        <div id="channelStats" style="display: flex; gap: 20px; color: #aaa; font-size: 14px;"></div>
+                    </div>
+                    <button class="nav-btn" onclick="syncYouTubeData()" id="syncBtn" style="background: #00d400; border-color: #00d400; color: black;">
+                        🔄 Sync Data
+                    </button>
+                </div>
+                
+                <!-- Personalization Preview -->
+                <div id="personalizationPreview" style="background-color: #0f0f0f; border: 1px solid #444; border-radius: 8px; padding: 16px; margin-top: 16px;">
+                    <h3 style="color: white; font-size: 16px; margin-bottom: 12px;">🤖 AI Personalization Enhancement</h3>
+                    <div id="personalizationContent" style="color: #aaa; font-size: 14px;"></div>
+                </div>
+            </div>
+            
+            <!-- YouTube Data Tabs -->
+            <div id="youtubeDataTabs" style="display: none;">
+                <div style="display: flex; gap: 8px; margin-bottom: 24px; border-bottom: 1px solid #333;">
+                    <button class="nav-btn active" id="likedVideosTab" onclick="switchYouTubeTab('likedVideos')" style="border-bottom: 2px solid #ff0000; border-radius: 0;">
+                        👍 Liked Videos
+                    </button>
+                    <button class="nav-btn" id="subscriptionsTab" onclick="switchYouTubeTab('subscriptions')">
+                        📺 Subscriptions
+                    </button>
+                    <button class="nav-btn" id="activitiesTab" onclick="switchYouTubeTab('activities')">
+                        📈 Recent Activity
+                    </button>
+                </div>
+                
+                <!-- Tab Content -->
+                <div class="youtube-tab-content" id="likedVideosContent">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                        <div style="color: #aaa; font-size: 14px;">
+                            <span id="youtubeVideosCount">Loading...</span> • Select videos to import to your MyTube collection
+                        </div>
+                        <div>
+                            <button class="nav-btn" onclick="selectAllYouTubeVideos()" id="selectAllBtn" style="margin-right: 8px; font-size: 12px;">
+                                Select All Visible
+                            </button>
+                            <button class="nav-btn" onclick="importSelectedVideos()" id="importSelectedBtn" style="background: #00d400; border-color: #00d400; color: black; font-size: 12px;" disabled>
+                                Import Selected (0)
+                            </button>
+                        </div>
+                    </div>
+                    <div class="video-grid" id="youtubeLikedGrid">
+                        <!-- YouTube liked videos will be loaded here -->
+                    </div>
+                    <div style="text-align: center; margin-top: 24px;" id="loadMoreContainer" style="display: none;">
+                        <button class="nav-btn" onclick="loadMoreYouTubeVideos()" id="loadMoreBtn" style="font-size: 14px;">
+                            📥 Load More Videos
+                        </button>
+                        <div style="margin-top: 8px; color: #666; font-size: 12px;" id="loadMoreStatus"></div>
+                    </div>
+                </div>
+                
+                <div class="youtube-tab-content" id="subscriptionsContent" style="display: none;">
+                    <div id="youtubeSubscriptionsGrid">
+                        <!-- YouTube subscriptions will be loaded here -->
+                    </div>
+                </div>
+                
+                <div class="youtube-tab-content" id="activitiesContent" style="display: none;">
+                    <div id="youtubeActivitiesGrid">
+                        <!-- YouTube activities will be loaded here -->
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Loading/Error States -->
+            <div id="youtubeLoading" class="loading">
+                <div class="loading-spinner"></div>
+                Connecting to your YouTube account...
+            </div>
+            
+            <div id="youtubeError" class="error" style="display: none;">
+                <!-- Error messages will be shown here -->
             </div>
         </div>
 
@@ -896,9 +1162,15 @@
                             <span>•</span>
                             <span>${video.views_formatted}</span>
                         </div>
-                        <button class="remove-btn" onclick="removeLikedVideo('${video.id}')" id="remove-${video.id}">
-                            🗑️ Remove
-                        </button>
+                        <div class="video-actions">
+                            <button class="action-btn find-similar-btn" onclick="findSimilarVideos('${video.id}')" id="similar-${video.id}">
+                                <span class="btn-icon">🔍</span>
+                                <span class="btn-text">Find Similar</span>
+                            </button>
+                            <button class="action-btn remove-btn-modern" onclick="removeLikedVideo('${video.id}')" id="remove-${video.id}">
+                                <span class="btn-icon">🗑️</span>
+                            </button>
+                        </div>
                     </div>
                 </div>
             `).join('');
@@ -912,6 +1184,118 @@
                     🎯 MyTube AI Curation • ${totalLiked} videos I know you'll love • Ranked by confidence
                 </div>
             `;
+        }
+
+        async function findSimilarVideos(videoId) {
+            const similarButton = document.getElementById(`similar-${videoId}`);
+            const originalText = similarButton.textContent;
+            
+            // Show loading state
+            similarButton.disabled = true;
+            similarButton.textContent = '🔍 Searching...';
+            
+            try {
+                // Get the video details to extract tags for similarity search
+                const response = await fetch(`/api/video-tags/${videoId}`);
+                const data = await response.json();
+                
+                if (!data.success) {
+                    throw new Error(data.error || 'Failed to get video tags');
+                }
+                
+                const videoTitle = data.video.title;
+                const tags = data.tags;
+                
+                if (!tags || tags.length === 0) {
+                    throw new Error('No tags found for this video to base similarity search on');
+                }
+                
+                // Create a search topic from the video's tags and title
+                const searchTopic = tags.slice(0, 5).join(' '); // Use first 5 tags
+                
+                // Switch to search view
+                switchView('search');
+                document.getElementById('searchBtn').style.display = 'inline-block';
+                
+                // Update search input to show what we're searching for
+                const searchInput = document.getElementById('searchInput');
+                searchInput.value = `Similar to: ${videoTitle}`;
+                
+                // Show immediate loading state
+                const searchVideoGrid = document.getElementById('searchVideoGrid');
+                searchVideoGrid.innerHTML = `
+                    <div class="loading" style="grid-column: 1 / -1;">
+                        <div class="loading-spinner"></div>
+                        <div style="margin-top: 16px;">
+                            <div>🔍 Finding videos similar to "${videoTitle}"</div>
+                            <div style="margin-top: 8px; font-size: 14px; color: #aaa;">
+                                Using tags: ${tags.slice(0, 5).join(', ')}
+                            </div>
+                            <div style="margin-top: 4px; font-size: 12px; color: #666;">
+                                🤖 Generating search keywords with AI...
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                // Update status bar
+                const statusBar = document.getElementById('statusBar');
+                statusBar.innerHTML = `
+                    <div class="status-learning">
+                        🔍 Finding similar videos • Analyzing "${videoTitle}" • Generating keywords with AI
+                    </div>
+                `;
+                
+                // Perform the actual similarity search
+                const searchResponse = await fetch('/api/find-similar-videos', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        video_id: videoId,
+                        search_topic: searchTopic
+                    }),
+                });
+                
+                const searchResult = await searchResponse.json();
+                
+                if (!searchResult.success) {
+                    throw new Error(searchResult.error || 'Similarity search failed');
+                }
+                
+                // Display the results
+                displaySearchResults(searchResult.videos, searchResult.session_id);
+                showNotification(`Found ${searchResult.videos.length} videos similar to "${videoTitle}" 🎯`);
+                
+                // Update status bar with results
+                statusBar.innerHTML = `
+                    <div class="status-success">
+                        ✅ Found ${searchResult.videos.length} videos similar to "${videoTitle}" • 
+                        Based on tags: ${tags.slice(0, 3).join(', ')}${tags.length > 3 ? '...' : ''}
+                    </div>
+                `;
+                
+            } catch (error) {
+                console.error('Error finding similar videos:', error);
+                showNotification('Failed to find similar videos: ' + error.message);
+                
+                // Show error in search view
+                const searchVideoGrid = document.getElementById('searchVideoGrid');
+                searchVideoGrid.innerHTML = `
+                    <div class="error" style="grid-column: 1 / -1;">
+                        <div>❌ Failed to find similar videos</div>
+                        <div style="margin-top: 8px; font-size: 14px;">${error.message}</div>
+                        <button class="nav-btn" onclick="switchView('liked')" style="margin-top: 12px;">
+                            ← Back to MyTube
+                        </button>
+                    </div>
+                `;
+            } finally {
+                // Reset button
+                similarButton.disabled = false;
+                similarButton.textContent = originalText;
+            }
         }
 
         async function removeLikedVideo(videoId) {
@@ -986,12 +1370,14 @@
             document.getElementById('likedBtn').classList.toggle('active', view === 'liked');
             document.getElementById('searchBtn').classList.toggle('active', view === 'search');
             document.getElementById('historyBtn').classList.toggle('active', view === 'history');
+            document.getElementById('youtubeBtn').classList.toggle('active', view === 'youtube');
             
             // Update view containers
             document.getElementById('ratingView').classList.toggle('active', view === 'rating');
             document.getElementById('likedView').classList.toggle('active', view === 'liked');
             document.getElementById('searchView').classList.toggle('active', view === 'search');
             document.getElementById('historyView').classList.toggle('active', view === 'history');
+            document.getElementById('youtubeView').classList.toggle('active', view === 'youtube');
             
             // Load appropriate data
             if (view === 'rating') {
@@ -1002,6 +1388,8 @@
                 // Search results are loaded by performTopicSearch()
             } else if (view === 'history') {
                 loadSearchHistory();
+            } else if (view === 'youtube') {
+                loadYouTubeProfile();
             }
         }
 
@@ -1563,8 +1951,635 @@
             });
         });
 
-        // Load recommendations when page loads
-        document.addEventListener('DOMContentLoaded', loadRecommendations);
+        // OAuth and YouTube Profile Functions
+        let currentYouTubeTab = 'likedVideos';
+
+        async function checkAuthStatus() {
+            try {
+                const response = await fetch('/api/auth/status');
+                const data = await response.json();
+                
+                updateAuthUI(data);
+                return data;
+            } catch (error) {
+                console.error('Error checking auth status:', error);
+                showAuthError('Failed to check authentication status');
+                return { authenticated: false };
+            }
+        }
+
+        function updateAuthUI(authData) {
+            const authLoading = document.getElementById('authLoading');
+            const authButtons = document.getElementById('authButtons');
+            const userInfo = document.getElementById('userInfo');
+            const youtubeBtn = document.getElementById('youtubeBtn');
+            
+            // Hide loading
+            authLoading.style.display = 'none';
+            
+            if (authData.authenticated) {
+                // Show user info, hide login button
+                authButtons.style.display = 'none';
+                userInfo.style.display = 'block';
+                youtubeBtn.style.display = 'inline-block';
+                
+                // Update user info
+                if (authData.user) {
+                    document.getElementById('userName').textContent = authData.user.name;
+                    // Use default avatar if no profile picture
+                    document.getElementById('userAvatar').src = 
+                        authData.user.profile_picture || 
+                        `https://ui-avatars.com/api/?name=${encodeURIComponent(authData.user.name)}&background=ff0000&color=fff`;
+                }
+                
+                // Update status bar for enhanced personalization
+                updateStatusBarForAuth(true);
+            } else {
+                // Show login button, hide user info
+                authButtons.style.display = 'block';
+                userInfo.style.display = 'none';
+                youtubeBtn.style.display = 'none';
+                
+                if (!authData.oauth_configured) {
+                    // Show configuration error
+                    document.getElementById('loginBtn').textContent = '⚠️ OAuth Not Configured';
+                    document.getElementById('loginBtn').disabled = true;
+                    showNotification('OAuth not configured. Please set GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET.');
+                }
+                
+                updateStatusBarForAuth(false);
+            }
+        }
+
+        function updateStatusBarForAuth(authenticated) {
+            const statusBar = document.getElementById('statusBar');
+            if (authenticated) {
+                // Add enhancement indicator to status bar
+                const currentStatus = statusBar.innerHTML;
+                if (!currentStatus.includes('ENHANCED')) {
+                    statusBar.innerHTML = currentStatus.replace('🤖 AI Model Active', '🤖 AI Model Active • ENHANCED with YouTube data');
+                }
+            }
+        }
+
+        function showAuthError(message) {
+            const authLoading = document.getElementById('authLoading');
+            const authButtons = document.getElementById('authButtons');
+            
+            authLoading.style.display = 'none';
+            authButtons.innerHTML = `<div style="color: #ff4444; font-size: 12px;">${message}</div>`;
+            authButtons.style.display = 'block';
+        }
+
+        function loginWithYouTube() {
+            // Redirect to OAuth login
+            window.location.href = '/auth/login';
+        }
+
+        async function logoutFromYouTube() {
+            if (!confirm('Are you sure you want to disconnect your YouTube account?')) {
+                return;
+            }
+            
+            try {
+                const response = await fetch('/auth/logout', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    showNotification('Successfully logged out from YouTube 👋');
+                    
+                    // Update UI
+                    updateAuthUI({ authenticated: false, oauth_configured: true });
+                    
+                    // Switch away from YouTube view if currently viewing
+                    if (currentView === 'youtube') {
+                        switchView('rating');
+                    }
+                    
+                    // Refresh recommendations to remove personalization
+                    setTimeout(() => {
+                        loadRecommendations();
+                    }, 1000);
+                } else {
+                    throw new Error(result.error || 'Logout failed');
+                }
+            } catch (error) {
+                console.error('Error logging out:', error);
+                showNotification('Failed to logout: ' + error.message);
+            }
+        }
+
+        async function loadYouTubeProfile() {
+            const youtubeLoading = document.getElementById('youtubeLoading');
+            const youtubeError = document.getElementById('youtubeError');
+            const youtubeProfileCard = document.getElementById('youtubeProfileCard');
+            const youtubeDataTabs = document.getElementById('youtubeDataTabs');
+            const youtubeSectionTitle = document.getElementById('youtubeSectionTitle');
+            
+            // Show loading
+            youtubeLoading.style.display = 'block';
+            youtubeError.style.display = 'none';
+            youtubeProfileCard.style.display = 'none';
+            youtubeDataTabs.style.display = 'none';
+            
+            try {
+                const response = await fetch('/api/youtube/profile');
+                const data = await response.json();
+                
+                if (!data.success) {
+                    throw new Error(data.error || 'Failed to load YouTube profile');
+                }
+                
+                // Hide loading, show content
+                youtubeLoading.style.display = 'none';
+                youtubeProfileCard.style.display = 'block';
+                youtubeDataTabs.style.display = 'block';
+                youtubeSectionTitle.style.display = 'flex';
+                
+                // Update profile info
+                displayYouTubeProfile(data);
+                
+            } catch (error) {
+                console.error('Error loading YouTube profile:', error);
+                youtubeLoading.style.display = 'none';
+                youtubeError.style.display = 'block';
+                youtubeError.innerHTML = `
+                    <div>Failed to load YouTube profile: ${error.message}</div>
+                    <div style="margin-top: 12px; font-size: 14px;">
+                        <button class="nav-btn" onclick="loadYouTubeProfile()" style="margin-right: 8px;">Retry</button>
+                        <button class="nav-btn" onclick="switchView('rating')">Back to Recommendations</button>
+                    </div>
+                `;
+            }
+        }
+
+        function displayYouTubeProfile(data) {
+            const channelTitle = document.getElementById('channelTitle');
+            const channelStats = document.getElementById('channelStats');
+            const personalizationContent = document.getElementById('personalizationContent');
+            
+            // Update channel info
+            channelTitle.textContent = data.profile.channel.title;
+            channelStats.innerHTML = `
+                <span><strong>${data.profile.stats.liked_videos}</strong> liked videos</span>
+                <span><strong>${data.profile.stats.subscriptions}</strong> subscriptions</span>
+                <span><strong>${data.profile.stats.activities}</strong> recent activities</span>
+                <span><strong>${data.profile.channel.subscriber_count.toLocaleString()}</strong> subscribers</span>
+            `;
+            
+            // Update personalization preview
+            loadPersonalizationPreview();
+            
+            // Display YouTube data
+            displayYouTubeLikedVideos(data.liked_videos);
+            displayYouTubeSubscriptions(data.subscriptions);
+            displayYouTubeActivities(data.recent_activities);
+            
+            // Switch to liked videos tab by default
+            switchYouTubeTab('likedVideos');
+        }
+
+        async function loadPersonalizationPreview() {
+            try {
+                const response = await fetch('/api/youtube/personalization-preview');
+                const data = await response.json();
+                
+                if (data.success) {
+                    const personalizationContent = document.getElementById('personalizationContent');
+                    const p = data.personalization;
+                    
+                    personalizationContent.innerHTML = `
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 12px;">
+                            <div style="text-align: center;">
+                                <div style="font-size: 24px; font-weight: bold; color: #00d400;">${p.total_tags}</div>
+                                <div style="font-size: 12px;">Personalization Tags</div>
+                            </div>
+                            <div style="text-align: center;">
+                                <div style="font-size: 24px; font-weight: bold; color: #ffaa00;">${p.current_ratings}</div>
+                                <div style="font-size: 12px;">Manual Ratings</div>
+                            </div>
+                            <div style="text-align: center;">
+                                <div style="font-size: 24px; font-weight: bold; color: ${p.enhancement_potential === 'high' ? '#00d400' : p.enhancement_potential === 'moderate' ? '#ffaa00' : '#ff6b6b'};">${p.enhancement_potential.toUpperCase()}</div>
+                                <div style="font-size: 12px;">Enhancement Level</div>
+                            </div>
+                        </div>
+                        <div style="margin-bottom: 8px;">${p.description}</div>
+                        <div style="font-size: 12px; color: #666;">
+                            ${data.recommendations.before} → ${data.recommendations.after}
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                console.error('Error loading personalization preview:', error);
+            }
+        }
+
+        let selectedYouTubeVideos = new Set();
+        let allYouTubeVideos = [];
+        let displayedVideoCount = 0;
+        const videosPerPage = 12;
+
+        function displayYouTubeLikedVideos(videos, append = false) {
+            const grid = document.getElementById('youtubeLikedGrid');
+            const loadMoreContainer = document.getElementById('loadMoreContainer');
+            const loadMoreBtn = document.getElementById('loadMoreBtn');
+            const loadMoreStatus = document.getElementById('loadMoreStatus');
+            const youtubeVideosCount = document.getElementById('youtubeVideosCount');
+            
+            if (!append) {
+                // First load - store all videos and reset display
+                allYouTubeVideos = videos || [];
+                displayedVideoCount = 0;
+                grid.innerHTML = '';
+                selectedYouTubeVideos.clear();
+            }
+            
+            if (allYouTubeVideos.length === 0) {
+                grid.innerHTML = '<div class="loading">No liked videos found from YouTube.</div>';
+                loadMoreContainer.style.display = 'none';
+                youtubeVideosCount.textContent = 'No videos';
+                return;
+            }
+            
+            // Calculate videos to show
+            const startIndex = displayedVideoCount;
+            const endIndex = Math.min(startIndex + videosPerPage, allYouTubeVideos.length);
+            const videosToShow = allYouTubeVideos.slice(startIndex, endIndex);
+            
+            // Generate HTML for new videos
+            const newVideoHTML = videosToShow.map(video => `
+                <div class="video-card" id="youtube-video-${video.id}">
+                    <div class="video-thumbnail" onclick="openVideo('https://www.youtube.com/watch?v=${video.id}')">
+                        <img src="https://img.youtube.com/vi/${video.id}/hqdefault.jpg" alt="${video.title}" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%22320%22 height=%22180%22><rect width=%22100%%22 height=%22100%%22 fill=%22%23333%22/><text x=%2250%%22 y=%2250%%22 text-anchor=%22middle%22 dy=%22.3em%22 fill=%22%23999%22>No Image</text></svg>'">
+                        <div class="confidence-badge" style="background: rgba(255, 0, 0, 0.8); color: white;">
+                            YouTube ❤️
+                        </div>
+                        <!-- Selection checkbox overlay -->
+                        <div class="video-selection" style="position: absolute; top: 8px; left: 8px;">
+                            <input type="checkbox" id="select-${video.id}" onchange="toggleVideoSelection('${video.id}')" style="width: 18px; height: 18px; cursor: pointer;">
+                        </div>
+                    </div>
+                    <div class="video-info">
+                        <div class="video-title" onclick="openVideo('https://www.youtube.com/watch?v=${video.id}')" style="cursor: pointer;">${video.title}</div>
+                        <div class="video-meta">
+                            <span>${video.channel_name}</span>
+                            <span>•</span>
+                            <span>${formatViewCount(video.view_count)}</span>
+                        </div>
+                        <div style="margin-top: 8px; text-align: center;">
+                            <button class="rating-btn like-btn" onclick="importSingleVideo('${video.id}')" style="font-size: 12px;">
+                                ➕ Add to MyTube
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+            
+            // Append or replace content
+            if (append) {
+                grid.innerHTML += newVideoHTML;
+            } else {
+                grid.innerHTML = newVideoHTML;
+            }
+            
+            // Update counters
+            displayedVideoCount = endIndex;
+            
+            // Update status displays
+            youtubeVideosCount.textContent = `${displayedVideoCount} of ${allYouTubeVideos.length} videos`;
+            
+            // Show/hide load more button
+            const hasMore = displayedVideoCount < allYouTubeVideos.length;
+            loadMoreContainer.style.display = hasMore ? 'block' : 'none';
+            
+            if (hasMore) {
+                const remaining = allYouTubeVideos.length - displayedVideoCount;
+                loadMoreStatus.textContent = `${remaining} more video${remaining !== 1 ? 's' : ''} available`;
+                loadMoreBtn.disabled = false;
+                loadMoreBtn.textContent = '📥 Load More Videos';
+            } else if (allYouTubeVideos.length > videosPerPage) {
+                loadMoreStatus.textContent = 'All videos loaded';
+            }
+        }
+
+        function loadMoreYouTubeVideos() {
+            const loadMoreBtn = document.getElementById('loadMoreBtn');
+            
+            // Show loading state
+            loadMoreBtn.disabled = true;
+            loadMoreBtn.textContent = '⏳ Loading...';
+            
+            // Simulate loading delay for better UX
+            setTimeout(() => {
+                displayYouTubeLikedVideos(null, true); // append = true
+            }, 300);
+        }
+
+        function toggleVideoSelection(videoId) {
+            const checkbox = document.getElementById(`select-${videoId}`);
+            const videoCard = document.getElementById(`youtube-video-${videoId}`);
+            
+            if (checkbox.checked) {
+                selectedYouTubeVideos.add(videoId);
+                videoCard.style.border = '2px solid #00d400';
+                videoCard.style.background = 'rgba(0, 212, 0, 0.1)';
+            } else {
+                selectedYouTubeVideos.delete(videoId);
+                videoCard.style.border = '';
+                videoCard.style.background = '';
+            }
+            
+            updateImportButton();
+        }
+
+        function updateImportButton() {
+            const importBtn = document.getElementById('importSelectedBtn');
+            const count = selectedYouTubeVideos.size;
+            
+            importBtn.textContent = `Import Selected (${count})`;
+            importBtn.disabled = count === 0;
+            
+            if (count === 0) {
+                importBtn.style.opacity = '0.6';
+            } else {
+                importBtn.style.opacity = '1';
+            }
+        }
+
+        function selectAllYouTubeVideos() {
+            const checkboxes = document.querySelectorAll('#youtubeLikedGrid input[type="checkbox"]');
+            const selectAllBtn = document.getElementById('selectAllBtn');
+            
+            // Check if all visible videos are selected
+            const allVisibleSelected = Array.from(checkboxes).every(checkbox => checkbox.checked);
+            
+            if (allVisibleSelected && selectedYouTubeVideos.size > 0) {
+                // Deselect all visible
+                checkboxes.forEach(checkbox => {
+                    if (checkbox.checked) {
+                        checkbox.checked = false;
+                        toggleVideoSelection(checkbox.id.replace('select-', ''));
+                    }
+                });
+                selectAllBtn.textContent = 'Select All Visible';
+            } else {
+                // Select all visible
+                checkboxes.forEach(checkbox => {
+                    if (!checkbox.checked) {
+                        checkbox.checked = true;
+                        toggleVideoSelection(checkbox.id.replace('select-', ''));
+                    }
+                });
+                selectAllBtn.textContent = `Deselect All (${checkboxes.length})`;
+            }
+        }
+
+        async function importSingleVideo(videoId) {
+            const videoCard = document.getElementById(`youtube-video-${videoId}`);
+            const addBtn = videoCard.querySelector('button');
+            
+            // Show loading state
+            addBtn.disabled = true;
+            addBtn.textContent = '⏳ Adding...';
+            
+            try {
+                const success = await importVideoToMyTube(videoId);
+                
+                if (success) {
+                    addBtn.textContent = '✅ Added';
+                    addBtn.style.background = '#00d400';
+                    addBtn.style.borderColor = '#00d400';
+                    addBtn.style.color = 'black';
+                    
+                    // Remove from selection if selected
+                    const checkbox = document.getElementById(`select-${videoId}`);
+                    if (checkbox.checked) {
+                        checkbox.checked = false;
+                        toggleVideoSelection(videoId);
+                    }
+                    
+                    setTimeout(() => {
+                        addBtn.textContent = '➕ Add to MyTube';
+                        addBtn.disabled = false;
+                        addBtn.style.background = '';
+                        addBtn.style.borderColor = '';
+                        addBtn.style.color = '';
+                    }, 2000);
+                } else {
+                    throw new Error('Import failed');
+                }
+            } catch (error) {
+                addBtn.textContent = '❌ Failed';
+                addBtn.style.background = '#ff4444';
+                addBtn.style.borderColor = '#ff4444';
+                
+                setTimeout(() => {
+                    addBtn.textContent = '➕ Add to MyTube';
+                    addBtn.disabled = false;
+                    addBtn.style.background = '';
+                    addBtn.style.borderColor = '';
+                    addBtn.style.color = '';
+                }, 2000);
+            }
+        }
+
+        async function importSelectedVideos() {
+            if (selectedYouTubeVideos.size === 0) return;
+            
+            const importBtn = document.getElementById('importSelectedBtn');
+            const originalText = importBtn.textContent;
+            
+            // Show loading state
+            importBtn.disabled = true;
+            importBtn.textContent = '⏳ Importing...';
+            
+            try {
+                const videoIds = Array.from(selectedYouTubeVideos);
+                let successCount = 0;
+                let failCount = 0;
+                
+                // Import videos one by one with progress
+                for (let i = 0; i < videoIds.length; i++) {
+                    const videoId = videoIds[i];
+                    importBtn.textContent = `⏳ Importing... (${i + 1}/${videoIds.length})`;
+                    
+                    try {
+                        const success = await importVideoToMyTube(videoId);
+                        if (success) {
+                            successCount++;
+                            // Update the UI for successful import
+                            const checkbox = document.getElementById(`select-${videoId}`);
+                            const videoCard = document.getElementById(`youtube-video-${videoId}`);
+                            checkbox.checked = false;
+                            videoCard.style.border = '';
+                            videoCard.style.background = '';
+                        } else {
+                            failCount++;
+                        }
+                    } catch (error) {
+                        failCount++;
+                    }
+                    
+                    // Small delay to prevent overwhelming the server
+                    await new Promise(resolve => setTimeout(resolve, 200));
+                }
+                
+                // Clear selection
+                selectedYouTubeVideos.clear();
+                updateImportButton();
+                
+                // Show results
+                if (successCount > 0) {
+                    showNotification(`✅ Successfully imported ${successCount} video${successCount > 1 ? 's' : ''} to MyTube!`);
+                }
+                
+                if (failCount > 0) {
+                    showNotification(`⚠️ ${failCount} video${failCount > 1 ? 's' : ''} failed to import (may already exist)`);
+                }
+                
+            } catch (error) {
+                showNotification('❌ Failed to import videos: ' + error.message);
+            } finally {
+                importBtn.disabled = false;
+                importBtn.textContent = originalText;
+            }
+        }
+
+        async function importVideoToMyTube(videoId) {
+            try {
+                const response = await fetch('/api/import-youtube-video', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        video_id: videoId
+                    })
+                });
+                
+                const result = await response.json();
+                return result.success;
+                
+            } catch (error) {
+                console.error('Error importing video:', error);
+                return false;
+            }
+        }
+
+        function displayYouTubeSubscriptions(subscriptions) {
+            const grid = document.getElementById('youtubeSubscriptionsGrid');
+            
+            if (!subscriptions || subscriptions.length === 0) {
+                grid.innerHTML = '<div class="loading">No subscriptions found from YouTube.</div>';
+                return;
+            }
+            
+            grid.innerHTML = subscriptions.map(sub => `
+                <div style="background-color: #1a1a1a; border: 1px solid #333; border-radius: 12px; padding: 16px; margin-bottom: 12px;">
+                    <div style="font-size: 16px; font-weight: 500; color: white; margin-bottom: 8px;">${sub.title}</div>
+                    <div style="font-size: 14px; color: #aaa; line-height: 1.4;">${sub.description.substring(0, 150)}${sub.description.length > 150 ? '...' : ''}</div>
+                    <div style="font-size: 12px; color: #666; margin-top: 8px;">Subscribed: ${new Date(sub.published_at).toLocaleDateString()}</div>
+                </div>
+            `).join('');
+        }
+
+        function displayYouTubeActivities(activities) {
+            const grid = document.getElementById('youtubeActivitiesGrid');
+            
+            if (!activities || activities.length === 0) {
+                grid.innerHTML = '<div class="loading">No recent activities found from YouTube.</div>';
+                return;
+            }
+            
+            grid.innerHTML = activities.map(activity => `
+                <div style="background-color: #1a1a1a; border: 1px solid #333; border-radius: 12px; padding: 16px; margin-bottom: 12px;">
+                    <div style="font-size: 14px; color: #aaa; margin-bottom: 4px;">${activity.type}</div>
+                    <div style="font-size: 16px; font-weight: 500; color: white; margin-bottom: 8px;">${activity.title}</div>
+                    <div style="font-size: 14px; color: #aaa; line-height: 1.4;">${activity.description.substring(0, 100)}${activity.description.length > 100 ? '...' : ''}</div>
+                    <div style="font-size: 12px; color: #666; margin-top: 8px;">${new Date(activity.published_at).toLocaleDateString()}</div>
+                </div>
+            `).join('');
+        }
+
+        function switchYouTubeTab(tab) {
+            currentYouTubeTab = tab;
+            
+            // Update tab buttons
+            document.getElementById('likedVideosTab').classList.toggle('active', tab === 'likedVideos');
+            document.getElementById('subscriptionsTab').classList.toggle('active', tab === 'subscriptions');
+            document.getElementById('activitiesTab').classList.toggle('active', tab === 'activities');
+            
+            // Update tab content
+            document.getElementById('likedVideosContent').style.display = tab === 'likedVideos' ? 'block' : 'none';
+            document.getElementById('subscriptionsContent').style.display = tab === 'subscriptions' ? 'block' : 'none';
+            document.getElementById('activitiesContent').style.display = tab === 'activities' ? 'block' : 'none';
+        }
+
+        async function syncYouTubeData() {
+            const syncBtn = document.getElementById('syncBtn');
+            
+            // Show loading state
+            syncBtn.disabled = true;
+            syncBtn.textContent = '🔄 Syncing...';
+            
+            try {
+                const response = await fetch('/api/youtube/sync', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    showNotification('✅ YouTube data synced successfully!');
+                    
+                    // Reload the profile to show updated data
+                    setTimeout(() => {
+                        loadYouTubeProfile();
+                    }, 1000);
+                } else {
+                    throw new Error(result.error || 'Sync failed');
+                }
+            } catch (error) {
+                console.error('Error syncing YouTube data:', error);
+                showNotification('❌ Failed to sync YouTube data: ' + error.message);
+            } finally {
+                // Reset button
+                syncBtn.disabled = false;
+                syncBtn.textContent = '🔄 Sync Data';
+            }
+        }
+
+        function formatViewCount(count) {
+            if (count >= 1000000) {
+                return (count / 1000000).toFixed(1) + 'M views';
+            } else if (count >= 1000) {
+                return (count / 1000).toFixed(1) + 'K views';
+            } else {
+                return count + ' views';
+            }
+        }
+
+        // Initialize auth status check on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            checkAuthStatus().then(authData => {
+                // If redirected from OAuth callback with YouTube view, switch to it
+                const urlParams = new URLSearchParams(window.location.search);
+                if (urlParams.get('view') === 'youtube' && authData.authenticated) {
+                    switchView('youtube');
+                } else {
+                    loadRecommendations();
+                }
+            });
+        });
         
         // Refresh current view every 5 minutes
         setInterval(() => {
