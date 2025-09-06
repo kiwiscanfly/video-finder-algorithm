@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Video Inspiration Dashboard</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         * {
             margin: 0;
@@ -612,6 +613,28 @@
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
         }
 
+        /* Enhanced error and status styling */
+        .status-error {
+            color: #ff6666;
+            background-color: rgba(255, 102, 102, 0.1);
+            padding: 8px 12px;
+            border-radius: 6px;
+            border: 1px solid rgba(255, 102, 102, 0.3);
+        }
+
+        .error {
+            background-color: rgba(255, 68, 68, 0.1);
+            border: 1px solid rgba(255, 68, 68, 0.3);
+            border-radius: 8px;
+            padding: 24px;
+            text-align: center;
+            color: #ff6666;
+        }
+
+        .error .nav-btn {
+            margin: 0 4px;
+        }
+
         .view-container {
             display: none;
         }
@@ -678,24 +701,24 @@
         
         <div class="search-container">
             <input type="text" class="search-box" placeholder="Search by topic (e.g., 'machine learning', 'react hooks')..." id="searchInput">
-            <button class="search-button" onclick="performTopicSearch()" id="searchButton">🔍</button>
+            <button class="search-button" onclick="performTopicSearch()" id="searchButton"><i class="fas fa-search"></i></button>
         </div>
         
         <div class="nav-buttons">
             <button class="nav-btn active" id="ratingBtn" onclick="switchView('rating')">
-                📝 Rate Videos
+                <i class="fas fa-star"></i> Rate Videos
             </button>
             <button class="nav-btn" id="likedBtn" onclick="switchView('liked')">
-                🎯 MyTube
+                <i class="fas fa-heart"></i> MyTube
             </button>
             <button class="nav-btn" id="searchBtn" onclick="switchView('search')" style="display: none;">
-                🔍 Search Results
+                <i class="fas fa-search"></i> Search Results
             </button>
             <button class="nav-btn" id="historyBtn" onclick="switchView('history')">
-                📜 Search History
+                <i class="fas fa-history"></i> Search History
             </button>
             <button class="nav-btn" id="youtubeBtn" onclick="switchView('youtube')" style="display: none;">
-                🎥 YouTube Profile
+                <i class="fab fa-youtube"></i> YouTube Profile
             </button>
         </div>
         
@@ -706,7 +729,7 @@
             </div>
             <div id="authButtons" style="display: none;">
                 <button class="nav-btn" id="loginBtn" onclick="loginWithYouTube()" style="background: #ff0000; border-color: #ff0000;">
-                    🎥 Connect YouTube
+                    <i class="fab fa-youtube"></i> Connect YouTube
                 </button>
             </div>
             <div id="userInfo" style="display: none;">
@@ -822,7 +845,7 @@
                         <div id="channelStats" style="display: flex; gap: 20px; color: #aaa; font-size: 14px;"></div>
                     </div>
                     <button class="nav-btn" onclick="syncYouTubeData()" id="syncBtn" style="background: #00d400; border-color: #00d400; color: black;">
-                        🔄 Sync Data
+                        <i class="fas fa-sync"></i> Sync Data
                     </button>
                 </div>
                 
@@ -837,13 +860,13 @@
             <div id="youtubeDataTabs" style="display: none;">
                 <div style="display: flex; gap: 8px; margin-bottom: 24px; border-bottom: 1px solid #333;">
                     <button class="nav-btn active" id="likedVideosTab" onclick="switchYouTubeTab('likedVideos')" style="border-bottom: 2px solid #ff0000; border-radius: 0;">
-                        👍 Liked Videos
+                        <i class="fas fa-thumbs-up"></i> Liked Videos
                     </button>
                     <button class="nav-btn" id="subscriptionsTab" onclick="switchYouTubeTab('subscriptions')">
-                        📺 Subscriptions
+                        <i class="fas fa-tv"></i> Subscriptions
                     </button>
                     <button class="nav-btn" id="activitiesTab" onclick="switchYouTubeTab('activities')">
-                        📈 Recent Activity
+                        <i class="fas fa-chart-line"></i> Recent Activity
                     </button>
                 </div>
                 
@@ -858,7 +881,7 @@
                                 Select All Visible
                             </button>
                             <button class="nav-btn" onclick="importSelectedVideos()" id="importSelectedBtn" style="background: #00d400; border-color: #00d400; color: black; font-size: 12px;" disabled>
-                                Import Selected (0)
+                                <i class="fas fa-download"></i> Import Selected (0)
                             </button>
                         </div>
                     </div>
@@ -867,7 +890,7 @@
                     </div>
                     <div style="text-align: center; margin-top: 24px;" id="loadMoreContainer" style="display: none;">
                         <button class="nav-btn" onclick="loadMoreYouTubeVideos()" id="loadMoreBtn" style="font-size: 14px;">
-                            📥 Load More Videos
+                            <i class="fas fa-plus"></i> Load More Videos
                         </button>
                         <div style="margin-top: 8px; color: #666; font-size: 12px;" id="loadMoreStatus"></div>
                     </div>
@@ -1164,11 +1187,11 @@
                         </div>
                         <div class="video-actions">
                             <button class="action-btn find-similar-btn" onclick="findSimilarVideos('${video.id}')" id="similar-${video.id}">
-                                <span class="btn-icon">🔍</span>
+                                <span class="btn-icon"><i class="fas fa-search"></i></span>
                                 <span class="btn-text">Find Similar</span>
                             </button>
                             <button class="action-btn remove-btn-modern" onclick="removeLikedVideo('${video.id}')" id="remove-${video.id}">
-                                <span class="btn-icon">🗑️</span>
+                                <span class="btn-icon"><i class="fas fa-trash"></i></span>
                             </button>
                         </div>
                     </div>
@@ -1188,30 +1211,54 @@
 
         async function findSimilarVideos(videoId) {
             const similarButton = document.getElementById(`similar-${videoId}`);
-            const originalText = similarButton.textContent;
+            const originalText = similarButton.innerHTML;
             
             // Show loading state
             similarButton.disabled = true;
-            similarButton.textContent = '🔍 Searching...';
+            similarButton.innerHTML = '<i class="fas fa-search fa-spin"></i> Searching...';
+            
+            console.log(`[FindSimilar] Starting similarity search for video ID: ${videoId}`);
             
             try {
                 // Get the video details to extract tags for similarity search
+                console.log(`[FindSimilar] Fetching tags for video: ${videoId}`);
                 const response = await fetch(`/api/video-tags/${videoId}`);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
                 const data = await response.json();
+                console.log('[FindSimilar] Video tags response:', data);
+                
+                if (!data || typeof data !== 'object') {
+                    throw new Error('Invalid response format from video tags API');
+                }
                 
                 if (!data.success) {
-                    throw new Error(data.error || 'Failed to get video tags');
+                    throw new Error(data.error || 'Failed to get video tags - no success flag');
+                }
+                
+                if (!data.video || typeof data.video !== 'object') {
+                    throw new Error('Video information missing from response');
                 }
                 
                 const videoTitle = data.video.title;
                 const tags = data.tags;
                 
-                if (!tags || tags.length === 0) {
-                    throw new Error('No tags found for this video to base similarity search on');
+                if (!videoTitle) {
+                    throw new Error('Video title is missing from response');
+                }
+                
+                console.log(`[FindSimilar] Video: "${videoTitle}", Tags:`, tags);
+                
+                if (!Array.isArray(tags) || tags.length === 0) {
+                    throw new Error(`No tags found for video "${videoTitle}". The video may not have enough metadata for similarity search.`);
                 }
                 
                 // Create a search topic from the video's tags and title
                 const searchTopic = tags.slice(0, 5).join(' '); // Use first 5 tags
+                console.log(`[FindSimilar] Search topic: "${searchTopic}"`);
                 
                 // Switch to search view
                 switchView('search');
@@ -1227,12 +1274,12 @@
                     <div class="loading" style="grid-column: 1 / -1;">
                         <div class="loading-spinner"></div>
                         <div style="margin-top: 16px;">
-                            <div>🔍 Finding videos similar to "${videoTitle}"</div>
+                            <div><i class="fas fa-search fa-spin"></i> Finding videos similar to "${videoTitle}"</div>
                             <div style="margin-top: 8px; font-size: 14px; color: #aaa;">
                                 Using tags: ${tags.slice(0, 5).join(', ')}
                             </div>
                             <div style="margin-top: 4px; font-size: 12px; color: #666;">
-                                🤖 Generating search keywords with AI...
+                                <i class="fas fa-robot"></i> Generating search keywords with AI...
                             </div>
                         </div>
                     </div>
@@ -1242,11 +1289,12 @@
                 const statusBar = document.getElementById('statusBar');
                 statusBar.innerHTML = `
                     <div class="status-learning">
-                        🔍 Finding similar videos • Analyzing "${videoTitle}" • Generating keywords with AI
+                        <i class="fas fa-search fa-spin"></i> Finding similar videos • Analyzing "${videoTitle}" • Generating keywords with AI
                     </div>
                 `;
                 
                 // Perform the actual similarity search
+                console.log('[FindSimilar] Starting similarity search API call');
                 const searchResponse = await fetch('/api/find-similar-videos', {
                     method: 'POST',
                     headers: {
@@ -1258,43 +1306,114 @@
                     }),
                 });
                 
-                const searchResult = await searchResponse.json();
+                console.log(`[FindSimilar] Search response status: ${searchResponse.status}`);
                 
-                if (!searchResult.success) {
-                    throw new Error(searchResult.error || 'Similarity search failed');
+                if (!searchResponse.ok) {
+                    const errorText = await searchResponse.text();
+                    throw new Error(`Search API failed (${searchResponse.status}): ${errorText}`);
                 }
                 
-                // Display the results
-                displaySearchResults(searchResult.videos, searchResult.session_id);
-                showNotification(`Found ${searchResult.videos.length} videos similar to "${videoTitle}" 🎯`);
+                const searchResult = await searchResponse.json();
+                console.log('[FindSimilar] Search result:', searchResult);
+                
+                if (!searchResult || typeof searchResult !== 'object') {
+                    throw new Error('Invalid response format from similarity search API');
+                }
+                
+                if (!searchResult.success) {
+                    throw new Error(searchResult.error || 'Similarity search failed - no success flag');
+                }
+                
+                if (!Array.isArray(searchResult.videos)) {
+                    throw new Error('Invalid videos format in search results');
+                }
+                
+                const videoCount = searchResult.videos.length;
+                console.log(`[FindSimilar] Found ${videoCount} similar videos`);
+                
+                if (videoCount === 0) {
+                    // Show no results message instead of error
+                    searchVideoGrid.innerHTML = `
+                        <div class="loading" style="grid-column: 1 / -1;">
+                            <div><i class="fas fa-info-circle"></i> No similar videos found</div>
+                            <div style="margin-top: 8px; font-size: 14px; color: #aaa;">
+                                Try searching for videos with similar content manually, or try a different video.
+                            </div>
+                            <div style="margin-top: 12px;">
+                                <button class="nav-btn" onclick="switchView('liked')" style="margin-right: 8px;">
+                                    <i class="fas fa-arrow-left"></i> Back to MyTube
+                                </button>
+                                <button class="nav-btn" onclick="switchView('rating')">
+                                    <i class="fas fa-star"></i> Rate More Videos
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                    showNotification(`No similar videos found for "${videoTitle}". Try a different video.`);
+                    return;
+                }
+                
+                // Display the results - format data for displaySearchResults function
+                const formattedResult = {
+                    topic: `Similar to "${videoTitle}"`,
+                    total_videos: videoCount,
+                    keywords_used: tags || [],
+                    session_id: searchResult.session_id || 'similarity-search',
+                    videos: searchResult.videos
+                };
+                displaySearchResults(formattedResult);
+                showNotification(`<i class="fas fa-check"></i> Found ${videoCount} videos similar to "${videoTitle}"`);
                 
                 // Update status bar with results
                 statusBar.innerHTML = `
                     <div class="status-success">
-                        ✅ Found ${searchResult.videos.length} videos similar to "${videoTitle}" • 
+                        <i class="fas fa-check"></i> Found ${videoCount} videos similar to "${videoTitle}" • 
                         Based on tags: ${tags.slice(0, 3).join(', ')}${tags.length > 3 ? '...' : ''}
                     </div>
                 `;
                 
             } catch (error) {
-                console.error('Error finding similar videos:', error);
-                showNotification('Failed to find similar videos: ' + error.message);
+                console.error('[FindSimilar] Error details:', {
+                    error: error,
+                    message: error.message,
+                    stack: error.stack,
+                    videoId: videoId
+                });
                 
-                // Show error in search view
+                const errorMessage = error.message || 'Unknown error occurred';
+                showNotification(`<i class="fas fa-exclamation-triangle"></i> Failed to find similar videos: ${errorMessage}`);
+                
+                // Show detailed error in search view
                 const searchVideoGrid = document.getElementById('searchVideoGrid');
                 searchVideoGrid.innerHTML = `
                     <div class="error" style="grid-column: 1 / -1;">
-                        <div>❌ Failed to find similar videos</div>
-                        <div style="margin-top: 8px; font-size: 14px;">${error.message}</div>
-                        <button class="nav-btn" onclick="switchView('liked')" style="margin-top: 12px;">
-                            ← Back to MyTube
-                        </button>
+                        <div><i class="fas fa-exclamation-triangle"></i> Failed to find similar videos</div>
+                        <div style="margin-top: 8px; font-size: 14px; color: #ff6666;">${errorMessage}</div>
+                        <div style="margin-top: 8px; font-size: 12px; color: #aaa;">
+                            Video ID: ${videoId}
+                        </div>
+                        <div style="margin-top: 12px;">
+                            <button class="nav-btn" onclick="findSimilarVideos('${videoId}')" style="margin-right: 8px;">
+                                <i class="fas fa-redo"></i> Try Again
+                            </button>
+                            <button class="nav-btn" onclick="switchView('liked')">
+                                <i class="fas fa-arrow-left"></i> Back to MyTube
+                            </button>
+                        </div>
+                    </div>
+                `;
+                
+                // Also update status bar
+                const statusBar = document.getElementById('statusBar');
+                statusBar.innerHTML = `
+                    <div class="status-error">
+                        <i class="fas fa-exclamation-triangle"></i> Similarity search failed: ${errorMessage}
                     </div>
                 `;
             } finally {
                 // Reset button
                 similarButton.disabled = false;
-                similarButton.textContent = originalText;
+                similarButton.innerHTML = originalText;
             }
         }
 
@@ -1755,7 +1874,7 @@
             
             // Show loading state
             searchButton.disabled = true;
-            searchButton.textContent = '🔍 Searching...';
+            searchButton.innerHTML = '<i class="fas fa-search fa-spin"></i>';
             
             // Switch to search results view immediately and show loading
             switchView('search');
@@ -1810,7 +1929,7 @@
             } finally {
                 // Reset search button
                 searchButton.disabled = false;
-                searchButton.textContent = '🔍';
+                searchButton.innerHTML = '<i class="fas fa-search"></i>';
             }
         }
         
@@ -2234,7 +2353,7 @@
                         </div>
                         <div style="margin-top: 8px; text-align: center;">
                             <button class="rating-btn like-btn" onclick="importSingleVideo('${video.id}')" style="font-size: 12px;">
-                                ➕ Add to MyTube
+                                <i class="fas fa-plus"></i> Add to MyTube
                             </button>
                         </div>
                     </div>
@@ -2262,7 +2381,7 @@
                 const remaining = allYouTubeVideos.length - displayedVideoCount;
                 loadMoreStatus.textContent = `${remaining} more video${remaining !== 1 ? 's' : ''} available`;
                 loadMoreBtn.disabled = false;
-                loadMoreBtn.textContent = '📥 Load More Videos';
+                loadMoreBtn.innerHTML = '<i class="fas fa-plus"></i> Load More Videos';
             } else if (allYouTubeVideos.length > videosPerPage) {
                 loadMoreStatus.textContent = 'All videos loaded';
             }
@@ -2273,7 +2392,7 @@
             
             // Show loading state
             loadMoreBtn.disabled = true;
-            loadMoreBtn.textContent = '⏳ Loading...';
+            loadMoreBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Loading...';
             
             // Simulate loading delay for better UX
             setTimeout(() => {
@@ -2302,7 +2421,7 @@
             const importBtn = document.getElementById('importSelectedBtn');
             const count = selectedYouTubeVideos.size;
             
-            importBtn.textContent = `Import Selected (${count})`;
+            importBtn.innerHTML = `<i class="fas fa-download"></i> Import Selected (${count})`;
             importBtn.disabled = count === 0;
             
             if (count === 0) {
@@ -2346,13 +2465,13 @@
             
             // Show loading state
             addBtn.disabled = true;
-            addBtn.textContent = '⏳ Adding...';
+            addBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Adding...';
             
             try {
                 const success = await importVideoToMyTube(videoId);
                 
                 if (success) {
-                    addBtn.textContent = '✅ Added';
+                    addBtn.innerHTML = '<i class="fas fa-check"></i> Added';
                     addBtn.style.background = '#00d400';
                     addBtn.style.borderColor = '#00d400';
                     addBtn.style.color = 'black';
@@ -2365,7 +2484,7 @@
                     }
                     
                     setTimeout(() => {
-                        addBtn.textContent = '➕ Add to MyTube';
+                        addBtn.innerHTML = '<i class="fas fa-plus"></i> Add to MyTube';
                         addBtn.disabled = false;
                         addBtn.style.background = '';
                         addBtn.style.borderColor = '';
@@ -2375,12 +2494,12 @@
                     throw new Error('Import failed');
                 }
             } catch (error) {
-                addBtn.textContent = '❌ Failed';
+                addBtn.innerHTML = '<i class="fas fa-times"></i> Failed';
                 addBtn.style.background = '#ff4444';
                 addBtn.style.borderColor = '#ff4444';
                 
                 setTimeout(() => {
-                    addBtn.textContent = '➕ Add to MyTube';
+                    addBtn.innerHTML = '<i class="fas fa-plus"></i> Add to MyTube';
                     addBtn.disabled = false;
                     addBtn.style.background = '';
                     addBtn.style.borderColor = '';
@@ -2397,7 +2516,7 @@
             
             // Show loading state
             importBtn.disabled = true;
-            importBtn.textContent = '⏳ Importing...';
+            importBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Importing...';
             
             try {
                 const videoIds = Array.from(selectedYouTubeVideos);
@@ -2407,7 +2526,7 @@
                 // Import videos one by one with progress
                 for (let i = 0; i < videoIds.length; i++) {
                     const videoId = videoIds[i];
-                    importBtn.textContent = `⏳ Importing... (${i + 1}/${videoIds.length})`;
+                    importBtn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Importing... (${i + 1}/${videoIds.length})`;
                     
                     try {
                         const success = await importVideoToMyTube(videoId);
@@ -2526,7 +2645,7 @@
             
             // Show loading state
             syncBtn.disabled = true;
-            syncBtn.textContent = '🔄 Syncing...';
+            syncBtn.innerHTML = '<i class="fas fa-sync fa-spin"></i> Syncing...';
             
             try {
                 const response = await fetch('/api/youtube/sync', {
@@ -2554,7 +2673,7 @@
             } finally {
                 // Reset button
                 syncBtn.disabled = false;
-                syncBtn.textContent = '🔄 Sync Data';
+                syncBtn.innerHTML = '<i class="fas fa-sync"></i> Sync Data';
             }
         }
 
